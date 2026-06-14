@@ -570,6 +570,27 @@
           "why": "Teaches comparative decision-making by contrasting tools. Grouping examples by tool teaches each in isolation — not the needed contrast."
         }
       ]
+    },
+    {
+      "id": "sharable",
+      "name": "sharable",
+      "scenarios": {
+        "SHRE": {
+          "label": "shred",
+          "color": "#5fb5e0"
+        }
+      },
+      "cards": [
+        {
+          "id": "umqdqoewkaiuh",
+          "scn": "SHRE",
+          "topic": "testing the shared feature to Deck.json",
+          "q": "do y&#39;all see this shared deck? xD",
+          "a": "the way to share is at the bottom of a deck you&#39;re currently switched to you should be able to click share to library.",
+          "why": "the purpose is to have a platform to share topics and would be fun to challenge other areas and maybe later do some analytics with claude and implementing claude to fetch/create questions through this this... I&#39;m aware this feature exists in claude, but thought it would be nice to have a place for studying... wish i did this earlier, but honestly there will be many more cert opportunities for VGV in the future should we want to share studying here too.  Anywho, Good Luck to all! &lt;3",
+          "miss": false
+        }
+      ]
     }
   ]
 }
