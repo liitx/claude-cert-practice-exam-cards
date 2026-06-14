@@ -215,6 +215,14 @@
   .subject-editor .field:first-child{margin-top:0}
   .editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
   .editor-actions .btn{padding:11px;min-height:42px;font-size:13.5px}
+  .subject-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+  .subject-row{display:flex;align-items:center;gap:10px;padding:6px 0;
+    border-bottom:1px solid var(--line)}
+  .subject-row:last-child{border-bottom:none}
+  .subject-row .sub-chip{flex:0 0 auto}
+  .subject-count{flex:1;font-size:12px;color:var(--muted);font-family:var(--mono);
+    letter-spacing:.02em}
+  .subject-row .sub-x{flex:0 0 auto;width:30px;height:30px;font-size:16px}
   .danger-zone{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line)}
   .danger-zone .btn-danger{background:rgba(217,122,138,.12);color:var(--cs);border-color:transparent;
     width:100%;padding:14px;font-size:14px;min-height:48px}
@@ -536,9 +544,10 @@ function refreshSaveBtn(){
 }
 function refreshSubjectEditorBtn(){
   if(!modal)return;
-  const btn=document.querySelector('.sub-edit-save');
-  if(!btn)return;
-  btn.disabled=!(modal.editLabel&&modal.editLabel.trim());
+  const edit=document.querySelector('.sub-edit-save');
+  if(edit)edit.disabled=!(modal.editLabel&&modal.editLabel.trim());
+  const add=document.querySelector('.sub-new-save');
+  if(add)add.disabled=!(modal.newSubject&&modal.newSubject.label.trim());
 }
 
 function pickSubject(key){
@@ -589,6 +598,7 @@ function removeSubject(key){
   if(userDeck&&userDeck.scenarios[key])delete userDeck.scenarios[key];
   if((state.overlay.scenarios[deckId]||{})[key])delete state.overlay.scenarios[deckId][key];
   if(modal.subject===key)modal.subject=Object.keys(deckScenarios(deckId))[0]||'';
+  if(modal.editingSubjectKey===key)modal.editingSubjectKey=null;
   save();render();
 }
 function isUserSubject(deckId,key){
@@ -653,6 +663,26 @@ function openExportModal(){
 }
 function openImportModal(){
   modal={type:'import',text:'',error:'',replaceProgress:false};
+  render();
+}
+function openManageSubjectsModal(){
+  modal={type:'manage-subjects'};
+  render();
+}
+function saveNewSubject(){
+  if(!modal||!modal.newSubject||!modal.newSubject.label.trim())return;
+  const deckId=state.currentDeckId;
+  const label=modal.newSubject.label.trim();
+  const existing=deckScenarios(deckId);
+  let base=label.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4)||'S';
+  let key=base;let n=2;
+  while(existing[key])key=base+(n++);
+  const entry={label,color:modal.newSubject.color};
+  const userDeck=state.userDecks.find(d=>d.id===deckId);
+  if(userDeck){userDeck.scenarios[key]=entry;}
+  else{state.overlay.scenarios[deckId]=state.overlay.scenarios[deckId]||{};state.overlay.scenarios[deckId][key]=entry;}
+  save();
+  modal.newSubject=null;
   render();
 }
 function doImport(){
@@ -923,6 +953,76 @@ function modalHTML(){
       </div>
     </div>`;
   }
+  if(modal.type==='manage-subjects'){
+    const deckId=state.currentDeckId;
+    const d=currentDeck();
+    const scenarios=deckScenarios(deckId);
+    const scenarioKeys=Object.keys(scenarios);
+    const cardsByScn=deckCards(deckId).reduce((m,c)=>{m[c.scn]=(m[c.scn]||0)+1;return m;},{});
+    const editingKey=modal.editingSubjectKey;
+    const addingSubject=!!modal.newSubject;
+
+    const rows=scenarioKeys.map(k=>{
+      const v=scenarios[k];
+      const count=cardsByScn[k]||0;
+      const isLast=scenarioKeys.length<=1;
+      const canDelete=count===0&&!isLast;
+      const delTitle=isLast?'keep at least one subject':count>0?(count+' card'+(count>1?'s':'')+' use this'):'delete';
+      return `<div class="subject-row">
+        <button type="button" class="sub-chip colored" style="background:${v.color}" onclick="openSubjectEditor('${esc(k)}')">${esc(v.label)}</button>
+        <span class="subject-count">${count} card${count===1?'':'s'}</span>
+        <button type="button" class="sub-x" ${canDelete?'':'disabled'} onclick="${canDelete?`removeSubject('${esc(k)}')`:''}" title="${esc(delTitle)}">&times;</button>
+      </div>`;
+    }).join('');
+
+    return `<div class="backdrop" onclick="if(event.target===this)closeModal()">
+      <div class="sheet" role="dialog" aria-modal="true">
+        <h2>Subjects</h2>
+        <div class="sub">Rename or delete labels for <b>${esc(d.name)}</b>. Tap a chip to rename. Delete is blocked while cards still reference a subject.</div>
+
+        <div class="subject-list">${rows}</div>
+
+        ${!addingSubject&&!editingKey?`
+        <button class="add-btn" onclick="toggleAddSubject()" style="margin-top:16px;width:100%;justify-content:center"><span class="plus">+</span> New subject</button>`:''}
+
+        ${addingSubject?`
+        <div class="subject-editor" style="margin-top:14px">
+          <div class="field">
+            <label>New subject name</label>
+            <input type="text" placeholder="e.g. Tool Use" value="${esc(modal.newSubject.label)}" oninput="mnest('newSubject','label',this.value)" autofocus>
+          </div>
+          <div class="field">
+            <label>Color</label>
+            ${swatchRow(modal.newSubject.color,'pickNewSubjectColor')}
+          </div>
+          <div class="editor-actions">
+            <button class="btn btn-cancel" onclick="toggleAddSubject()">Cancel</button>
+            <button class="btn btn-save sub-new-save" onclick="saveNewSubject()" ${modal.newSubject.label.trim()?'':'disabled'}>Add</button>
+          </div>
+        </div>`:''}
+
+        ${editingKey?`
+        <div class="subject-editor" style="margin-top:14px">
+          <div class="field">
+            <label>Rename subject</label>
+            <input type="text" value="${esc(modal.editLabel)}" oninput="mset('editLabel',this.value)" autofocus>
+          </div>
+          <div class="field">
+            <label>Color</label>
+            ${swatchRow(modal.editColor,'pickEditColor')}
+          </div>
+          <div class="editor-actions">
+            <button class="btn btn-cancel" onclick="closeSubjectEditor()">Cancel</button>
+            <button class="btn btn-save sub-edit-save" onclick="saveSubjectEdit()" ${modal.editLabel&&modal.editLabel.trim()?'':'disabled'}>Save</button>
+          </div>
+        </div>`:''}
+
+        <div class="actions">
+          <button class="btn btn-cancel" onclick="closeModal()" style="grid-column:1 / -1">Done</button>
+        </div>
+      </div>
+    </div>`;
+  }
   if(modal.type==='export'){
     const deckId=state.currentDeckId;
     const d=currentDeck();
@@ -1121,6 +1221,7 @@ function render(){
     ${body}
     <div class="deck-meta">
       <button class="reset" onclick="resetAll()">reset progress</button>
+      · <button class="reset" onclick="openManageSubjectsModal()">subjects</button>
       ${deckHasUserContent(state.currentDeckId)?` · <button class="reset share" onclick="shareDeck()">share to library</button>`:''}
       · <button class="reset" onclick="openExportModal()">export</button>
       · <button class="reset" onclick="openImportModal()">import</button>
