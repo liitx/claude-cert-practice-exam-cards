@@ -236,22 +236,43 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final mono = theme.extension<MonoTypography>()!;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    final palette = theme.extension<ScenarioPalette>()!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: palette.got,
+            borderRadius: BorderRadius.circular(99),
+          ),
           child: Text(
-            deck.name,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: AppColors.text,
+            'FLUTTER WEB · phase 2',
+            style: mono.chip.copyWith(
+              color: AppColors.ink,
+              fontWeight: FontWeight.w700,
             ),
-            overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 12),
-        Text('${idx + 1} / $total', style: mono.counter),
+        const SizedBox(height: 10),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Text(
+                deck.name,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text('${idx + 1} / $total', style: mono.counter),
+          ],
+        ),
       ],
     );
   }
