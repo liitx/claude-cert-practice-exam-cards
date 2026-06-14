@@ -1,6 +1,7 @@
 import 'package:drill_deck/features/study/bloc/study_bloc.dart';
 import 'package:drill_deck/features/study/widgets/card_basic.dart';
 import 'package:drill_deck/features/study/widgets/card_mc.dart';
+import 'package:drill_deck/features/study/widgets/deck_footer.dart';
 import 'package:drill_deck/features/study/widgets/deck_selector.dart';
 import 'package:drill_deck/features/study/widgets/flip_card.dart';
 import 'package:drill_deck/models/card.dart';
@@ -180,14 +181,22 @@ class _Ready extends StatelessWidget {
         ],
         const SizedBox(height: 18),
         Expanded(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () =>
-                context.read<StudyBloc>().add(const StudyFlipped()),
-            child: FlipCard(
-              flipped: state.flipped,
-              front: _faceFront(card, scenario),
-              back: _faceBack(card, scenario),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: 320,
+                maxHeight: 480,
+              ),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    context.read<StudyBloc>().add(const StudyFlipped()),
+                child: FlipCard(
+                  flipped: state.flipped,
+                  front: _faceFront(card, scenario),
+                  back: _faceBack(card, scenario),
+                ),
+              ),
             ),
           ),
         ),
@@ -202,6 +211,8 @@ class _Ready extends StatelessWidget {
           textAlign: TextAlign.center,
           style: mono.hint,
         ),
+        const SizedBox(height: 14),
+        DeckFooter(deck: deck),
       ],
     );
   }
