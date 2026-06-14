@@ -29,8 +29,9 @@
   .rail-fill{height:100%;background:linear-gradient(90deg,var(--action),var(--got));
     width:0;transition:width .35s ease}
 
-  header{display:flex;align-items:baseline;justify-content:space-between;
+  header{display:flex;align-items:center;justify-content:space-between;
     gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .header-right{display:inline-flex;align-items:center;gap:10px}
   h1{font-size:15px;font-weight:650;letter-spacing:-.01em}
   h1 span{color:var(--muted);font-weight:450}
   .counter{font-family:var(--mono);font-size:12px;color:var(--muted)}
@@ -138,6 +139,18 @@
     background:rgba(124,131,255,.08);border:1px solid rgba(124,131,255,.3);
     font-size:12.5px;line-height:1.5;color:var(--text)}
   .share-banner b{color:var(--action)}
+  .lib-btn{position:relative;background:var(--surface-2);border:1px solid var(--line);
+    color:var(--muted);border-radius:10px;padding:8px 10px;cursor:pointer;min-height:34px;
+    font:600 12.5px var(--sans);display:inline-flex;align-items:center;gap:6px;transition:.15s}
+  .lib-btn:hover{color:var(--text);border-color:var(--faint)}
+  .lib-btn .arrow{font-size:14px;line-height:1}
+  .lib-btn .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;
+    border-radius:99px;background:var(--got);color:var(--ink);font:700 11px var(--sans);
+    display:none;align-items:center;justify-content:center;padding:0 5px;
+    box-shadow:0 0 0 2px var(--ink)}
+  .lib-btn.has-new{border-color:var(--got);color:var(--got)}
+  .lib-btn.has-new .dot{display:inline-flex;animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 
   /* modal */
   .backdrop{position:fixed;inset:0;background:rgba(8,9,12,.72);backdrop-filter:blur(3px);
@@ -322,6 +335,7 @@ let filter='miss';
 let idx=0;
 let flipped=false;
 let modal=null;
+let pendingSync=null;
 
 function load(){
   try{
@@ -359,8 +373,44 @@ async function loadSharedDecks(){
     BUILTIN_DECKS.length=0;
     data.decks.forEach(d=>BUILTIN_DECKS.push({...d,builtin:true,shared:true}));
     if(!getDeckBase(state.currentDeckId))state.currentDeckId=BUILTIN_DECKS[0]?.id||'cca-f';
+    pendingSync=null;
     render();
   }catch(e){/* offline — keep embedded fallback */}
+}
+
+async function checkLibrary(){
+  try{
+    const res=await fetch(SHARED_URL,{cache:'no-cache'});
+    if(!res.ok)return;
+    const data=await res.json();
+    if(!data||!Array.isArray(data.decks))return;
+    let newDecks=0,newCards=0;
+    for(const d of data.decks){
+      const cur=BUILTIN_DECKS.find(x=>x.id===d.id);
+      if(!cur){newDecks++;newCards+=Array.isArray(d.cards)?d.cards.length:0;continue;}
+      const curIds=new Set(cur.cards.map(c=>c.id));
+      newCards+=d.cards.filter(c=>!curIds.has(c.id)).length;
+    }
+    if(newDecks>0||newCards>0){
+      pendingSync={data,newDecks,newCards};
+      render();
+    }else if(pendingSync){
+      pendingSync=null;
+      render();
+    }
+  }catch(e){}
+}
+
+function applySync(){
+  if(!pendingSync)return;
+  BUILTIN_DECKS.length=0;
+  pendingSync.data.decks.forEach(d=>BUILTIN_DECKS.push({...d,builtin:true,shared:true}));
+  pendingSync=null;
+  render();
+}
+async function syncNow(){
+  await checkLibrary();
+  if(pendingSync)applySync();
 }
 
 function save(){try{
@@ -864,11 +914,23 @@ function render(){
     <div class="keys">space flip · ← → move · 1 review · 2 got it</div>`;
   }
 
+  const newCount=pendingSync?(pendingSync.newDecks+pendingSync.newCards):0;
+  const libTitle=pendingSync
+    ?`${pendingSync.newDecks?pendingSync.newDecks+' new deck'+(pendingSync.newDecks>1?'s':''):''}${pendingSync.newDecks&&pendingSync.newCards?', ':''}${pendingSync.newCards?pendingSync.newCards+' new card'+(pendingSync.newCards>1?'s':''):''} — tap to sync`
+    :'Library up to date — tap to check';
+
   root.innerHTML=`
     <div class="rail"><div class="rail-fill" style="width:${pct}%"></div></div>
     <header>
       <h1>${esc(d.name)} <span>· ${reviewed}/${totalCards} touched · ${pct}% mastered</span></h1>
-      <span class="counter">${dk.length?`${idx+1} / ${dk.length}`:'0 / 0'}</span>
+      <span class="header-right">
+        <button class="lib-btn ${pendingSync?'has-new':''}" onclick="syncNow()" title="${esc(libTitle)}" aria-label="${esc(libTitle)}">
+          <span class="arrow">&#x21bb;</span>
+          <span>library</span>
+          ${newCount?`<span class="dot">${newCount>9?'9+':newCount}</span>`:'<span class="dot"></span>'}
+        </button>
+        <span class="counter">${dk.length?`${idx+1} / ${dk.length}`:'0 / 0'}</span>
+      </span>
     </header>
     <div class="deck-row">
       <select class="deck-select" onchange="switchDeck(this.value)" aria-label="Select deck">${deckOpts}</select>
@@ -884,6 +946,11 @@ function render(){
     </div>
     ${modalHTML()}`;
 }
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')checkLibrary();
+});
+window.addEventListener('focus',()=>checkLibrary());
 
 document.addEventListener('keydown',e=>{
   if(modal){
