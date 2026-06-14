@@ -1,38 +1,93 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Drill deck practice cards">
+  <meta name="theme-color" content="#13151a">
 
-  <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="drill_deck">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>drill_deck</title>
+  <title>Drill Deck</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #13151a;
+      color: #e9eaef;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    #boot {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: #13151a;
+      transition: opacity .25s ease;
+    }
+    #boot.hidden { opacity: 0; pointer-events: none; }
+    #boot .ring {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid #2a2e3a;
+      border-top-color: #7c83ff;
+      animation: spin .9s linear infinite;
+    }
+    #boot .label {
+      margin-top: 14px;
+      font: 600 11.5px/1 ui-monospace, "SF Mono", Menlo, monospace;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #5b606d;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+  <div id="boot">
+    <div class="ring"></div>
+    <div class="label">drill deck</div>
+  </div>
+  <script>
+    // Fade the boot screen once Flutter inserts its render target.
+    (function () {
+      function hideBoot() {
+        var boot = document.getElementById('boot');
+        if (!boot) return;
+        boot.classList.add('hidden');
+        setTimeout(function () { boot.remove(); }, 300);
+      }
+      function check() {
+        return document.querySelector('flt-glass-pane') ||
+               document.querySelector('flutter-view') ||
+               document.querySelector('flt-scene-host');
+      }
+      if (check()) { hideBoot(); return; }
+      var observer = new MutationObserver(function () {
+        if (check()) {
+          observer.disconnect();
+          hideBoot();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      // Safety net: hide after 6s no matter what.
+      setTimeout(function () { observer.disconnect(); hideBoot(); }, 6000);
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

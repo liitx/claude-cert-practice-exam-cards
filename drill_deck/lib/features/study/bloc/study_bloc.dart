@@ -7,6 +7,7 @@ import 'package:drill_deck/models/progress_state.dart';
 import 'package:drill_deck/models/study_filter.dart';
 import 'package:drill_deck/repositories/decks_repository.dart';
 import 'package:drill_deck/repositories/progress_repository.dart';
+import 'package:drill_deck/repositories/storage_repository.dart';
 import 'package:equatable/equatable.dart';
 
 part 'study_event.dart';
@@ -16,11 +17,20 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
   StudyBloc({
     required DecksRepository decksRepository,
     required ProgressRepository progressRepository,
+    required StorageRepository storageRepository,
     String? initialDeckId,
   })  : _decks = decksRepository,
         _progress = progressRepository,
-        _requestedDeckId = initialDeckId,
-        super(const StudyState.initial()) {
+        _storage = storageRepository,
+        _requestedDeckId = initialDeckId ??
+            storageRepository.current?.currentDeckId,
+        super(
+          StudyState(
+            status: StudyStatus.initial,
+            filter:
+                storageRepository.current?.filter ?? StudyFilter.miss,
+          ),
+        ) {
     on<StudyStarted>(_onStarted);
     on<StudyDeckRequested>(_onDeckRequested);
     on<StudyDecksReceived>(_onDecksReceived);
@@ -43,6 +53,7 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
 
   final DecksRepository _decks;
   final ProgressRepository _progress;
+  final StorageRepository _storage;
   String? _requestedDeckId;
   StreamSubscription<List<Deck>>? _decksSub;
   StreamSubscription<Map<String, ProgressState>>? _progressSub;
@@ -65,6 +76,7 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
     final deck = _pickDeck(state.allDecks);
     _switchProgressSubscription(deck?.id);
     _emitForDeck(emit, state.allDecks, deck, resetIdx: true);
+    _persistViewState(deckId: event.deckId);
   }
 
   void _onDecksReceived(
@@ -102,6 +114,18 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
       filterOverride: event.filter,
       resetIdx: true,
     );
+    _persistViewState(filter: event.filter);
+  }
+
+  Future<void> _persistViewState({String? deckId, StudyFilter? filter}) async {
+    final snapshot = _storage.current;
+    if (snapshot == null) return;
+    final next = snapshot.copyWith(
+      currentDeckId: deckId ?? snapshot.currentDeckId,
+      filter: filter ?? snapshot.filter,
+    );
+    if (next == snapshot) return;
+    await _storage.save(next);
   }
 
   void _switchProgressSubscription(String? deckId) {
@@ -144,13 +168,14 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
     final newIdx = resetIdx
         ? 0
         : (filtered.isEmpty ? 0 : state.idx.clamp(0, filtered.length - 1));
+    final newFlipped = resetIdx ? false : state.flipped;
     emit(
       state.copyWith(
         status: filtered.isEmpty ? StudyStatus.empty : StudyStatus.ready,
         deck: deck,
         cards: filtered,
         idx: newIdx,
-        flipped: false,
+        flipped: newFlipped,
         allDecks: allDecks,
         progress: progress,
         filter: filter,

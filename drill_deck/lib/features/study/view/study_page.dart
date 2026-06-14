@@ -15,6 +15,7 @@ import 'package:drill_deck/models/scenario.dart';
 import 'package:drill_deck/models/study_filter.dart';
 import 'package:drill_deck/repositories/decks_repository.dart';
 import 'package:drill_deck/repositories/progress_repository.dart';
+import 'package:drill_deck/repositories/storage_repository.dart';
 import 'package:drill_deck/theme/app_colors.dart';
 import 'package:drill_deck/theme/mono_typography.dart';
 import 'package:drill_deck/theme/scenario_palette.dart';
@@ -32,6 +33,7 @@ class StudyPage extends StatelessWidget {
       create: (context) => StudyBloc(
         decksRepository: context.read<DecksRepository>(),
         progressRepository: context.read<ProgressRepository>(),
+        storageRepository: context.read<StorageRepository>(),
         initialDeckId: deckId,
       )..add(const StudyStarted()),
       child: _StudyShell(deckId: deckId),
