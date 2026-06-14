@@ -334,6 +334,10 @@ function load(){
       state.overlay.scenarios=state.overlay.scenarios||{};
       state.progress=state.progress||{};
       state.userDecks=state.userDecks||[];
+      if(parsed.view){
+        if(typeof parsed.view.filter==='string')filter=parsed.view.filter;
+        if(Number.isInteger(parsed.view.idx))idx=parsed.view.idx;
+      }
     }else{
       const legacy=localStorage.getItem(LEGACY_KEY);
       if(legacy){
@@ -359,7 +363,10 @@ async function loadSharedDecks(){
   }catch(e){/* offline — keep embedded fallback */}
 }
 
-function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(state));}catch(e){}}
+function save(){try{
+  const out={...state,view:{filter,idx}};
+  localStorage.setItem(STORE_KEY,JSON.stringify(out));
+}catch(e){}}
 
 function getDeckBase(id){
   return state.userDecks.find(d=>d.id===id)||BUILTIN_DECKS.find(d=>d.id===id)||null;
@@ -401,8 +408,8 @@ function counts(){
   };
 }
 
-function setFilter(f){filter=f;idx=0;flipped=false;render();}
-function go(d){const dk=viewDeck();if(!dk.length)return;idx=(idx+d+dk.length)%dk.length;flipped=false;render();}
+function setFilter(f){filter=f;idx=0;flipped=false;save();render();}
+function go(d){const dk=viewDeck();if(!dk.length)return;idx=(idx+d+dk.length)%dk.length;flipped=false;save();render();}
 function flip(){flipped=!flipped;render();}
 function mark(s){
   const dk=viewDeck();if(!dk.length)return;
@@ -418,8 +425,9 @@ function resetAll(){
   save();idx=0;flipped=false;render();
 }
 function switchDeck(id){
-  state.currentDeckId=id;save();
+  state.currentDeckId=id;
   idx=0;flipped=false;filter='all';
+  save();
   render();
 }
 
