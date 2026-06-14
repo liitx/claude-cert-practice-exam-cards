@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CCA-F Drill Deck</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Drill Deck</title>
 </head>
 <body>
 <div id="root"></div>
@@ -21,25 +21,42 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--ink);color:var(--text);font-family:var(--sans);
     -webkit-font-smoothing:antialiased;min-height:100%}
-  #root{max-width:680px;margin:0 auto;padding:20px 18px 48px;min-height:100vh;
+  body{padding-bottom:env(safe-area-inset-bottom)}
+  #root{max-width:680px;margin:0 auto;padding:18px 16px 40px;min-height:100vh;
     display:flex;flex-direction:column}
 
-  /* progress rail */
-  .rail{height:4px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:18px}
+  .rail{height:4px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:16px}
   .rail-fill{height:100%;background:linear-gradient(90deg,var(--action),var(--got));
     width:0;transition:width .35s ease}
 
   header{display:flex;align-items:baseline;justify-content:space-between;
-    gap:12px;margin-bottom:14px;flex-wrap:wrap}
+    gap:12px;margin-bottom:12px;flex-wrap:wrap}
   h1{font-size:15px;font-weight:650;letter-spacing:-.01em}
   h1 span{color:var(--muted);font-weight:450}
   .counter{font-family:var(--mono);font-size:12px;color:var(--muted)}
 
+  /* deck row */
+  .deck-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-bottom:14px}
+  .deck-select{appearance:none;-webkit-appearance:none;background:var(--surface-2);
+    color:var(--text);border:1px solid var(--line);border-radius:12px;
+    padding:12px 36px 12px 14px;font:550 14px/1 var(--sans);cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238b909e' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;min-height:44px;width:100%}
+  .deck-select:focus{outline:2px solid var(--action);outline-offset:2px}
+  .add-btn{font:550 14px/1 var(--sans);background:var(--surface-2);color:var(--text);
+    border:1px solid var(--line);border-radius:12px;padding:12px 16px;cursor:pointer;
+    min-height:44px;display:flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap}
+  .add-btn:hover{border-color:var(--action);color:#fff}
+  .add-btn.primary{background:var(--action);border-color:var(--action);color:#fff}
+  .add-btn.primary:hover{filter:brightness(1.1)}
+  .add-btn .plus{font-size:18px;line-height:0;font-weight:600}
+
   /* filters */
   .filters{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap}
   .chip{font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;
-    padding:6px 11px;border-radius:99px;border:1px solid var(--line);
-    background:transparent;color:var(--muted);cursor:pointer;transition:.15s}
+    padding:8px 12px;border-radius:99px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);cursor:pointer;transition:.15s;
+    min-height:32px}
   .chip:hover{border-color:var(--faint);color:var(--text)}
   .chip.on{background:var(--surface-2);border-color:var(--action);color:var(--text)}
   .chip .n{color:var(--faint);margin-left:5px}
@@ -53,7 +70,7 @@
   .card.flipped{transform:rotateY(180deg)}
   .face{position:absolute;inset:0;backface-visibility:hidden;
     -webkit-backface-visibility:hidden;border-radius:16px;background:var(--surface);
-    border:1px solid var(--line);padding:26px 24px;display:flex;flex-direction:column;
+    border:1px solid var(--line);padding:24px 22px;display:flex;flex-direction:column;
     overflow:hidden}
   .face.back{transform:rotateY(180deg);background:var(--surface-2)}
   .stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
@@ -79,16 +96,22 @@
   .picked b{color:#fff;font-weight:600}
   .flip-hint{margin-top:auto;padding-top:14px;font-family:var(--mono);font-size:11px;
     color:var(--faint)}
+  .card-tools{position:absolute;right:14px;top:14px;display:flex;gap:6px}
+  .card-tool{background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--muted);
+    font:550 11px/1 var(--mono);padding:6px 10px;border-radius:8px;cursor:pointer;
+    min-height:30px}
+  .card-tool:hover{color:var(--text);border-color:var(--faint)}
+  .card-tool.danger:hover{color:var(--cs);border-color:var(--cs)}
 
   /* controls */
   .controls{display:grid;grid-template-columns:auto 1fr 1fr auto;gap:9px}
-  .btn{font-family:var(--sans);font-size:13.5px;font-weight:550;border-radius:11px;
+  .btn{font-family:var(--sans);font-size:14px;font-weight:550;border-radius:12px;
     border:1px solid var(--line);background:var(--surface);color:var(--text);
-    padding:13px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;
-    justify-content:center;gap:7px}
+    padding:14px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;
+    justify-content:center;gap:7px;min-height:48px}
   .btn:hover{border-color:var(--faint)}
   .btn:active{transform:translateY(1px)}
-  .btn.nav{padding:13px 16px;color:var(--muted);font-family:var(--mono)}
+  .btn.nav{padding:14px 18px;color:var(--muted);font-family:var(--mono);font-size:16px}
   .btn.review{border-color:transparent;background:rgba(224,164,88,.12);color:var(--miss)}
   .btn.review:hover{background:rgba(224,164,88,.2)}
   .btn.got{border-color:transparent;background:rgba(95,184,154,.13);color:var(--got)}
@@ -99,25 +122,89 @@
 
   .keys{text-align:center;font-family:var(--mono);font-size:10.5px;color:var(--faint);
     margin-top:14px;letter-spacing:.02em}
-  .empty{text-align:center;color:var(--muted);font-size:15px;padding:60px 20px;line-height:1.6}
+  .empty{text-align:center;color:var(--muted);font-size:15px;padding:48px 20px;line-height:1.6;
+    border:1px dashed var(--line);border-radius:16px;margin-bottom:18px}
   .empty b{color:var(--got)}
+  .empty .empty-cta{margin-top:18px;display:inline-flex}
   .reset{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);
     background:none;border:none;cursor:pointer;text-decoration:underline;text-align:center;
-    align-self:center}
+    align-self:center;padding:8px}
   .reset:hover{color:var(--muted)}
+  .deck-meta{margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center}
+  .deck-meta button{background:none;border:none;color:var(--cs);font:inherit;
+    cursor:pointer;text-decoration:underline;padding:4px}
 
+  /* modal */
+  .backdrop{position:fixed;inset:0;background:rgba(8,9,12,.72);backdrop-filter:blur(3px);
+    z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:0;
+    animation:fade .15s ease}
+  .sheet{background:var(--surface);width:100%;max-width:560px;
+    border-radius:20px 20px 0 0;padding:22px 20px calc(28px + env(safe-area-inset-bottom));
+    max-height:92vh;overflow-y:auto;border:1px solid var(--line);border-bottom:none;
+    animation:slideup .25s cubic-bezier(.2,.7,.2,1)}
+  .sheet h2{font-size:17px;font-weight:650;margin-bottom:4px;letter-spacing:-.01em}
+  .sheet .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .field{margin-top:14px}
+  .field label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+  .field input,.field textarea,.field select{
+    width:100%;background:var(--ink);border:1px solid var(--line);color:var(--text);
+    font:450 15px/1.4 var(--sans);padding:13px 14px;border-radius:11px;min-height:48px;
+    transition:border-color .15s}
+  .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--action)}
+  .field textarea{resize:vertical;min-height:96px;line-height:1.5}
+  .field select{appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238b909e' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .checkrow{display:flex;align-items:center;gap:10px;margin-top:18px;
+    background:var(--surface-2);padding:12px 14px;border-radius:11px;cursor:pointer;
+    border:1px solid var(--line);min-height:48px}
+  .checkrow input{width:18px;height:18px;accent-color:var(--miss)}
+  .checkrow span{font-size:14px}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+  .swatch{width:38px;height:38px;border-radius:10px;border:2px solid transparent;
+    cursor:pointer;transition:.12s}
+  .swatch.on{border-color:#fff;transform:scale(1.08)}
+  .actions{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:24px}
+  .actions .btn{padding:15px;font-size:15px;min-height:52px}
+  .btn-cancel{background:transparent;color:var(--muted)}
+  .btn-save{background:var(--got);color:var(--ink);border-color:transparent;font-weight:650}
+  .btn-save:hover{filter:brightness(1.06)}
+  .btn-save:disabled{background:var(--line);color:var(--faint)}
+  .inline-link{background:none;border:none;color:var(--action);font:550 12px var(--mono);
+    cursor:pointer;padding:6px 0;text-decoration:underline;margin-top:6px}
+  .danger-zone{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line)}
+  .danger-zone .btn-danger{background:rgba(217,122,138,.12);color:var(--cs);border-color:transparent;
+    width:100%;padding:14px;font-size:14px;min-height:48px}
+  .danger-zone .btn-danger:hover{background:rgba(217,122,138,.22)}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes slideup{from{transform:translateY(40px);opacity:.6}to{transform:translateY(0);opacity:1}}
+
+  @media (min-width:560px){
+    .backdrop{align-items:center;padding:24px}
+    .sheet{border-radius:20px;border:1px solid var(--line);max-height:88vh}
+  }
   @media (max-width:480px){
+    #root{padding:14px 12px 32px}
     .q{font-size:16.5px}.a{font-size:15.5px}
     .controls{grid-template-columns:1fr 1fr}
-    .btn.nav{order:3}
+    .btn.nav{order:3;font-size:18px;padding:14px}
+    .deck-row{grid-template-columns:1fr 1fr}
+    .deck-select{grid-column:1 / -1}
+    .add-btn{justify-content:center}
+    .field-row{grid-template-columns:1fr}
+    .actions{grid-template-columns:1fr}
+    .actions .btn-cancel{order:2}
   }
   @media (prefers-reduced-motion:reduce){
     .card{transition:none}.rail-fill{transition:none}
+    .backdrop,.sheet{animation:none}
   }
 </style>
 
 <script>
-const DATA=[
+const ORIGINAL_CARDS=[
 {id:'ci1',scn:'CI',topic:'Batch Processing',miss:true,pick:'D',q:'Reduce API cost: you have latency-sensitive pre-merge checks AND overnight tech-debt reports. How do you split them?',a:'Batch for the overnight reports only; keep real-time for pre-merge checks.',why:'Match each API to its latency need — the Batches API (up to 24hr) suits reports, not blocking checks devs are waiting on.'},
 {id:'ci2',scn:'CI',topic:'Batch Processing',miss:false,q:'Of your CI review modes, which is the best candidate to move to the Batches API?',a:'Deep analysis only.',why:'It already runs overnight, tolerates latency, and polls for completion — a perfect match for the async, poll-based batch model (50% savings).'},
 {id:'ci3',scn:'CI',topic:'Structured Output',miss:false,q:'CI runs the Claude Code CLI in --print mode; you need reliable structured findings posted as inline PR comments.',a:'Use <code>--output-format json</code> + <code>--json-schema</code>, then parse and post via the GitHub API.',why:'Native CLI enforcement guarantees well-formed JSON with the required fields — more reliable than prompt-only formatting.'},
@@ -180,100 +267,389 @@ const DATA=[
 {id:'cs13',scn:'CS',topic:'Tool Selection',miss:true,pick:'D',q:'Agent sometimes picks <code>get_customer</code> when <code>lookup_order</code> is right, on ambiguous requests. How to structure few-shot examples?',a:'Add 4-6 examples targeting the ambiguous scenarios, each showing reasoning for why one tool was chosen over a plausible alternative.',why:'Teaches comparative decision-making by contrasting tools. Grouping examples by tool teaches each in isolation — not the needed contrast.'}
 ];
 
-const SCN={CI:{label:'Claude Code · CI',color:'var(--ci)'},MA:{label:'Multi-Agent',color:'var(--ma)'},CG:{label:'Code Generation',color:'var(--cg)'},CS:{label:'Customer Support',color:'var(--cs)'}};
-const KEY='cca-f-progress-v1';
-let status={}; // id -> 'review' | 'got'
+const ORIGINAL_SCN={
+  CI:{label:'Claude Code · CI',color:'#7c83ff'},
+  MA:{label:'Multi-Agent',color:'#5fb89a'},
+  CG:{label:'Code Generation',color:'#e0a458'},
+  CS:{label:'Customer Support',color:'#d97a8a'}
+};
+
+const BUILTIN_DECKS=[{
+  id:'cca-f',
+  name:'CCA-F Drill Deck',
+  builtin:true,
+  scenarios:ORIGINAL_SCN,
+  cards:ORIGINAL_CARDS
+}];
+
+const PRESET_COLORS=['#7c83ff','#5fb89a','#e0a458','#d97a8a','#9d7cff','#5fb5e0','#e07a5f','#a8b85f'];
+
+const STORE_KEY='drill-decks-v2';
+const LEGACY_KEY='cca-f-progress-v1';
+
+let state={currentDeckId:'cca-f',userDecks:[],overlay:{cards:{},scenarios:{}},progress:{}};
 let filter='miss';
 let idx=0;
 let flipped=false;
+let modal=null;
 
 function load(){
-  try{const v=localStorage.getItem(KEY); if(v) status=JSON.parse(v);}
-  catch(e){status={};}
+  try{
+    const v=localStorage.getItem(STORE_KEY);
+    if(v){
+      const parsed=JSON.parse(v);
+      state={...state,...parsed};
+      state.overlay=state.overlay||{cards:{},scenarios:{}};
+      state.overlay.cards=state.overlay.cards||{};
+      state.overlay.scenarios=state.overlay.scenarios||{};
+      state.progress=state.progress||{};
+      state.userDecks=state.userDecks||[];
+    }else{
+      const legacy=localStorage.getItem(LEGACY_KEY);
+      if(legacy){
+        try{state.progress={'cca-f':JSON.parse(legacy)};}catch(e){}
+      }
+    }
+  }catch(e){}
+  if(!getDeckBase(state.currentDeckId))state.currentDeckId='cca-f';
   render();
 }
-function save(){
-  try{localStorage.setItem(KEY,JSON.stringify(status));}catch(e){}
+
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(state));}catch(e){}}
+
+function getDeckBase(id){
+  return state.userDecks.find(d=>d.id===id)||BUILTIN_DECKS.find(d=>d.id===id)||null;
+}
+function deckScenarios(id){
+  const base=getDeckBase(id);if(!base)return {};
+  return {...base.scenarios,...((state.overlay.scenarios||{})[id]||{})};
+}
+function deckCards(id){
+  const base=getDeckBase(id);if(!base)return [];
+  return [...base.cards,...((state.overlay.cards||{})[id]||[])];
+}
+function isUserCard(deckId,cardId){
+  return ((state.overlay.cards||{})[deckId]||[]).some(c=>c.id===cardId);
+}
+function currentDeck(){return getDeckBase(state.currentDeckId);}
+function deckProgress(){
+  if(!state.progress[state.currentDeckId])state.progress[state.currentDeckId]={};
+  return state.progress[state.currentDeckId];
 }
 
-function deck(){
-  if(filter==='all') return DATA;
-  if(filter==='miss') return DATA.filter(c=>c.miss);
-  if(filter==='review') return DATA.filter(c=>status[c.id]==='review');
-  if(filter==='got') return DATA.filter(c=>status[c.id]==='got');
-  return DATA;
+function viewDeck(){
+  const cards=deckCards(state.currentDeckId);
+  const st=deckProgress();
+  if(filter==='all')return cards;
+  if(filter==='miss')return cards.filter(c=>c.miss);
+  if(filter==='review')return cards.filter(c=>st[c.id]==='review');
+  if(filter==='got')return cards.filter(c=>st[c.id]==='got');
+  return cards;
 }
 function counts(){
+  const cards=deckCards(state.currentDeckId);
+  const st=deckProgress();
   return {
-    all:DATA.length,
-    miss:DATA.filter(c=>c.miss).length,
-    review:DATA.filter(c=>status[c.id]==='review').length,
-    got:DATA.filter(c=>status[c.id]==='got').length
+    all:cards.length,
+    miss:cards.filter(c=>c.miss).length,
+    review:cards.filter(c=>st[c.id]==='review').length,
+    got:cards.filter(c=>st[c.id]==='got').length
   };
 }
 
 function setFilter(f){filter=f;idx=0;flipped=false;render();}
-function go(d){const dk=deck();if(!dk.length)return;idx=(idx+d+dk.length)%dk.length;flipped=false;render();}
+function go(d){const dk=viewDeck();if(!dk.length)return;idx=(idx+d+dk.length)%dk.length;flipped=false;render();}
 function flip(){flipped=!flipped;render();}
-function mark(s){const dk=deck();if(!dk.length)return;const c=dk[idx];
-  status[c.id]=(status[c.id]===s)?undefined:s;save();
-  if(status[c.id]===undefined)delete status[c.id];
-  // if filtering by review/got and card leaves the deck, clamp idx
-  const nd=deck();if(idx>=nd.length)idx=Math.max(0,nd.length-1);
+function mark(s){
+  const dk=viewDeck();if(!dk.length)return;
+  const c=dk[idx];const st=deckProgress();
+  if(st[c.id]===s)delete st[c.id]; else st[c.id]=s;
+  save();
+  const nd=viewDeck();if(idx>=nd.length)idx=Math.max(0,nd.length-1);
   render();
 }
-function resetAll(){status={};save();idx=0;flipped=false;render();}
+function resetAll(){
+  if(!confirm('Reset all progress for "'+currentDeck().name+'"?'))return;
+  state.progress[state.currentDeckId]={};
+  save();idx=0;flipped=false;render();
+}
+function switchDeck(id){
+  state.currentDeckId=id;save();
+  idx=0;flipped=false;filter='all';
+  render();
+}
 
-function esc(s){return s;} // content is trusted/authored
+function deleteCard(deckId,cardId){
+  if(!confirm('Delete this card?'))return;
+  const list=(state.overlay.cards||{})[deckId]||[];
+  state.overlay.cards[deckId]=list.filter(c=>c.id!==cardId);
+  const pg=state.progress[deckId]||{};delete pg[cardId];
+  save();
+  const nd=viewDeck();if(idx>=nd.length)idx=Math.max(0,nd.length-1);
+  flipped=false;render();
+}
+function deleteDeck(){
+  const d=currentDeck();if(!d||d.builtin)return;
+  if(!confirm('Delete deck "'+d.name+'" and all its cards?'))return;
+  state.userDecks=state.userDecks.filter(x=>x.id!==d.id);
+  delete state.progress[d.id];
+  if(state.overlay.cards)delete state.overlay.cards[d.id];
+  if(state.overlay.scenarios)delete state.overlay.scenarios[d.id];
+  state.currentDeckId='cca-f';
+  save();idx=0;flipped=false;filter='all';render();
+}
+
+/* -------- modals -------- */
+
+function openCardModal(){
+  const scenarios=deckScenarios(state.currentDeckId);
+  const keys=Object.keys(scenarios);
+  modal={type:'card',subject:keys[0]||'',topic:'',q:'',a:'',why:'',missed:false,pick:'',
+    newSubject:keys.length?null:{label:'',color:PRESET_COLORS[0]}};
+  render();
+}
+function openDeckModal(){
+  modal={type:'deck',name:'',firstLabel:'',firstColor:PRESET_COLORS[0]};
+  render();
+}
+function closeModal(){modal=null;render();}
+function mset(k,v){modal[k]=v;render();}
+function mnest(p,k,v){modal[p]=modal[p]||{};modal[p][k]=v;render();}
+function toggleAddSubject(){
+  if(modal.newSubject)modal.newSubject=null;
+  else modal.newSubject={label:'',color:PRESET_COLORS[0]};
+  render();
+}
+
+function saveCard(){
+  const deckId=state.currentDeckId;
+  let subjectKey=modal.subject;
+  if(modal.newSubject&&modal.newSubject.label.trim()){
+    const label=modal.newSubject.label.trim();
+    const existing=deckScenarios(deckId);
+    let base=label.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4)||'S';
+    let key=base;let n=2;
+    while(existing[key])key=base+n++;
+    state.overlay.scenarios[deckId]=state.overlay.scenarios[deckId]||{};
+    state.overlay.scenarios[deckId][key]={label,color:modal.newSubject.color};
+    subjectKey=key;
+  }
+  if(!modal.q.trim()||!modal.a.trim()||!subjectKey)return;
+  const card={
+    id:'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    scn:subjectKey,
+    topic:modal.topic.trim()||'General',
+    q:modal.q.trim(),
+    a:modal.a.trim(),
+    why:modal.why.trim(),
+    miss:!!modal.missed,
+    user:true
+  };
+  if(modal.missed&&modal.pick.trim())card.pick=modal.pick.trim();
+  state.overlay.cards[deckId]=state.overlay.cards[deckId]||[];
+  state.overlay.cards[deckId].push(card);
+  save();
+  modal=null;
+  filter='all';
+  const dk=viewDeck();idx=dk.findIndex(c=>c.id===card.id);if(idx<0)idx=dk.length-1;
+  flipped=false;render();
+}
+
+function saveDeck(){
+  if(!modal.name.trim()||!modal.firstLabel.trim())return;
+  const id='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const label=modal.firstLabel.trim();
+  const key=label.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4)||'S1';
+  state.userDecks.push({
+    id,
+    name:modal.name.trim(),
+    scenarios:{[key]:{label,color:modal.firstColor}},
+    cards:[]
+  });
+  state.currentDeckId=id;
+  state.progress[id]={};
+  save();
+  modal=null;
+  idx=0;flipped=false;filter='all';
+  render();
+}
+
+/* -------- render -------- */
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function txt(s,allowHTML){return allowHTML?(s||''):esc(s);}
+
+function swatchRow(selected,onPick){
+  return `<div class="swatches">${PRESET_COLORS.map(c=>
+    `<button type="button" class="swatch ${c===selected?'on':''}" style="background:${c}" onclick="${onPick}('${c}')"></button>`
+  ).join('')}</div>`;
+}
+
+function modalHTML(){
+  if(!modal)return '';
+  if(modal.type==='card'){
+    const scenarios=deckScenarios(state.currentDeckId);
+    const opts=Object.entries(scenarios).map(([k,v])=>
+      `<option value="${esc(k)}" ${modal.subject===k?'selected':''}>${esc(v.label)}</option>`).join('');
+    const addingSubject=!!modal.newSubject;
+    const valid=modal.q.trim()&&modal.a.trim()&&(modal.subject||(addingSubject&&modal.newSubject.label.trim()));
+    return `<div class="backdrop" onclick="if(event.target===this)closeModal()">
+      <div class="sheet" role="dialog" aria-modal="true">
+        <h2>New card</h2>
+        <div class="sub">Adding to <b>${esc(currentDeck().name)}</b></div>
+
+        ${Object.keys(scenarios).length?`
+        <div class="field">
+          <label>Subject</label>
+          <select onchange="mset('subject',this.value)" ${addingSubject?'disabled':''}>${opts}</select>
+          <button class="inline-link" type="button" onclick="toggleAddSubject()">${addingSubject?'use existing subject':'+ add new subject'}</button>
+        </div>`:''}
+
+        ${addingSubject?`
+        <div class="field">
+          <label>New subject name</label>
+          <input type="text" placeholder="e.g. Tool Use" value="${esc(modal.newSubject.label)}" oninput="mnest('newSubject','label',this.value)" autofocus>
+          <label style="margin-top:12px">Subject color</label>
+          ${swatchRow(modal.newSubject.color,'pickNewSubjectColor')}
+          ${Object.keys(scenarios).length?'<button class="inline-link" type="button" onclick="toggleAddSubject()">cancel</button>':''}
+        </div>`:''}
+
+        <div class="field">
+          <label>Topic</label>
+          <input type="text" placeholder="e.g. Batch Processing" value="${esc(modal.topic)}" oninput="mset('topic',this.value)">
+        </div>
+
+        <div class="field">
+          <label>Situation / Question</label>
+          <textarea placeholder="Describe the scenario or question..." oninput="mset('q',this.value)">${esc(modal.q)}</textarea>
+        </div>
+
+        <div class="field">
+          <label>Correct answer</label>
+          <textarea placeholder="The right approach..." oninput="mset('a',this.value)">${esc(modal.a)}</textarea>
+        </div>
+
+        <div class="field">
+          <label>Why (optional)</label>
+          <textarea placeholder="The reasoning behind it..." oninput="mset('why',this.value)">${esc(modal.why)}</textarea>
+        </div>
+
+        <label class="checkrow">
+          <input type="checkbox" ${modal.missed?'checked':''} onchange="mset('missed',this.checked)">
+          <span>I missed this one</span>
+        </label>
+
+        ${modal.missed?`
+        <div class="field">
+          <label>What I picked (optional)</label>
+          <input type="text" placeholder="e.g. A" maxlength="40" value="${esc(modal.pick)}" oninput="mset('pick',this.value)">
+        </div>`:''}
+
+        <div class="actions">
+          <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-save" onclick="saveCard()" ${valid?'':'disabled'}>Add card</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(modal.type==='deck'){
+    const valid=modal.name.trim()&&modal.firstLabel.trim();
+    return `<div class="backdrop" onclick="if(event.target===this)closeModal()">
+      <div class="sheet" role="dialog" aria-modal="true">
+        <h2>New deck</h2>
+        <div class="sub">A study deck with its own subjects and cards.</div>
+
+        <div class="field">
+          <label>Deck name</label>
+          <input type="text" placeholder="e.g. AWS Practice Exam" value="${esc(modal.name)}" oninput="mset('name',this.value)" autofocus>
+        </div>
+
+        <div class="field">
+          <label>First subject</label>
+          <input type="text" placeholder="e.g. Networking" value="${esc(modal.firstLabel)}" oninput="mset('firstLabel',this.value)">
+          <label style="margin-top:12px">Subject color</label>
+          ${swatchRow(modal.firstColor,'pickFirstColor')}
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-save" onclick="saveDeck()" ${valid?'':'disabled'}>Create deck</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
+function pickNewSubjectColor(c){modal.newSubject.color=c;render();}
+function pickFirstColor(c){modal.firstColor=c;render();}
 
 function render(){
-  const dk=deck();const c=counts();
+  const d=currentDeck();
+  const scenarios=deckScenarios(state.currentDeckId);
+  const dk=viewDeck();const c=counts();
   const root=document.getElementById('root');
-  const reviewed=DATA.filter(x=>status[x.id]).length;
-  const pct=Math.round((c.got/DATA.length)*100);
+  const totalCards=deckCards(state.currentDeckId).length;
+  const st=deckProgress();
+  const reviewed=Object.keys(st).length;
+  const pct=totalCards?Math.round((c.got/totalCards)*100):0;
 
-  const chips=[['miss','My misses',c.miss],['all','All',c.all],['review','Review',c.review],['got','Got it',c.got]]
-    .map(([k,lbl,n])=>`<button class="chip ${filter===k?'on':''}" onclick="setFilter('${k}')">${lbl}<span class="n">${n}</span></button>`).join('');
+  const decks=[...BUILTIN_DECKS,...state.userDecks];
+  const deckOpts=decks.map(x=>`<option value="${esc(x.id)}" ${state.currentDeckId===x.id?'selected':''}>${esc(x.name)}</option>`).join('');
+
+  const chips=[
+    ['miss','My misses',c.miss],
+    ['all','All',c.all],
+    ['review','Review',c.review],
+    ['got','Got it',c.got]
+  ].map(([k,lbl,n])=>`<button class="chip ${filter===k?'on':''}" onclick="setFilter('${k}')">${lbl}<span class="n">${n}</span></button>`).join('');
 
   let body;
   if(!dk.length){
     const msg=filter==='review'?'Nothing in your review pile.<br>Mark cards <b>Review</b> as you study to build one.'
-      :filter==='got'?'No cards marked <b>Got it</b> yet.':'No cards here.';
-    body=`<div class="empty">${msg}</div>`;
+      :filter==='got'?'No cards marked <b>Got it</b> yet.'
+      :filter==='miss'?'No cards flagged as missed.'
+      :'This deck has no cards yet.';
+    body=`<div class="empty">${msg}
+      <div class="empty-cta"><button class="add-btn primary" onclick="openCardModal()"><span class="plus">+</span> New card</button></div>
+    </div>`;
   }else{
-    const card=dk[idx];const s=SCN[card.scn];const st=status[card.id];
+    const card=dk[idx];const s=scenarios[card.scn]||{label:card.scn,color:'#7c83ff'};const stCard=st[card.id];
+    const userCard=isUserCard(state.currentDeckId,card.id);
+    const allowHTML=!card.user;
     body=`
     <div class="stage">
       <div class="card ${flipped?'flipped':''}" onclick="flip()">
         <div class="face front">
           <div class="stripe" style="background:${s.color}"></div>
+          ${userCard?`<div class="card-tools"><button class="card-tool danger" onclick="event.stopPropagation();deleteCard('${state.currentDeckId}','${card.id}')">delete</button></div>`:''}
           <div class="tags">
-            <span class="scn" style="background:${s.color}">${s.label}</span>
-            <span class="topic">${card.topic}</span>
+            <span class="scn" style="background:${s.color}">${esc(s.label)}</span>
+            <span class="topic">${esc(card.topic)}</span>
             ${card.miss?'<span class="miss-flag">you missed this</span>':''}
           </div>
           <div class="q-label">Situation</div>
-          <div class="q">${card.q}</div>
+          <div class="q">${txt(card.q,allowHTML)}</div>
           <div class="flip-hint">tap or press space to reveal →</div>
         </div>
         <div class="face back">
           <div class="stripe" style="background:${s.color}"></div>
           <div class="tags">
-            <span class="scn" style="background:${s.color}">${s.label}</span>
-            <span class="topic">${card.topic}</span>
+            <span class="scn" style="background:${s.color}">${esc(s.label)}</span>
+            <span class="topic">${esc(card.topic)}</span>
           </div>
           <div class="a-label">Correct approach</div>
-          <div class="a">${card.a}</div>
-          <div class="why">${card.why}</div>
-          ${card.miss?`<div class="picked">you picked <b>${card.pick}</b> — retrain the reflex above</div>`:''}
+          <div class="a">${txt(card.a,allowHTML)}</div>
+          ${card.why?`<div class="why">${txt(card.why,allowHTML)}</div>`:''}
+          ${card.miss&&card.pick?`<div class="picked">you picked <b>${esc(card.pick)}</b> — retrain the reflex above</div>`:''}
         </div>
       </div>
     </div>
     <div class="controls">
-      <button class="btn nav" onclick="go(-1)">←</button>
-      <button class="btn review ${st==='review'?'on-review':''}" onclick="mark('review')">⟲ Review</button>
-      <button class="btn got ${st==='got'?'on-got':''}" onclick="mark('got')">✓ Got it</button>
-      <button class="btn nav" onclick="go(1)">→</button>
+      <button class="btn nav" onclick="go(-1)" aria-label="Previous">←</button>
+      <button class="btn review ${stCard==='review'?'on-review':''}" onclick="mark('review')">⟲ Review</button>
+      <button class="btn got ${stCard==='got'?'on-got':''}" onclick="mark('got')">✓ Got it</button>
+      <button class="btn nav" onclick="go(1)" aria-label="Next">→</button>
     </div>
     <div class="keys">space flip · ← → move · 1 review · 2 got it</div>`;
   }
@@ -281,15 +657,29 @@ function render(){
   root.innerHTML=`
     <div class="rail"><div class="rail-fill" style="width:${pct}%"></div></div>
     <header>
-      <h1>CCA-F Drill Deck <span>· ${reviewed}/${DATA.length} touched · ${pct}% mastered</span></h1>
+      <h1>${esc(d.name)} <span>· ${reviewed}/${totalCards} touched · ${pct}% mastered</span></h1>
       <span class="counter">${dk.length?`${idx+1} / ${dk.length}`:'0 / 0'}</span>
     </header>
+    <div class="deck-row">
+      <select class="deck-select" onchange="switchDeck(this.value)" aria-label="Select deck">${deckOpts}</select>
+      <button class="add-btn primary" onclick="openCardModal()" aria-label="New card"><span class="plus">+</span> Card</button>
+      <button class="add-btn" onclick="openDeckModal()" aria-label="New deck"><span class="plus">+</span> Deck</button>
+    </div>
     <div class="filters">${chips}</div>
     ${body}
-    <button class="reset" onclick="resetAll()">reset all progress</button>`;
+    <div class="deck-meta">
+      <button class="reset" onclick="resetAll()">reset progress for this deck</button>
+      ${!d.builtin?` · <button onclick="deleteDeck()">delete this deck</button>`:''}
+    </div>
+    ${modalHTML()}`;
 }
 
 document.addEventListener('keydown',e=>{
+  if(modal){
+    if(e.key==='Escape')closeModal();
+    return;
+  }
+  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'))return;
   if(e.key===' '){e.preventDefault();flip();}
   else if(e.key==='ArrowRight')go(1);
   else if(e.key==='ArrowLeft')go(-1);
