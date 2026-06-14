@@ -4,6 +4,7 @@ import 'package:drill_deck/models/scenario.dart';
 import 'package:drill_deck/theme/app_colors.dart';
 import 'package:drill_deck/theme/mono_typography.dart';
 import 'package:drill_deck/theme/scenario_palette.dart';
+import 'package:drill_deck/widgets/inline_html_text.dart';
 import 'package:flutter/material.dart' hide Card;
 
 class MultipleChoiceCardFront extends StatelessWidget {
@@ -25,9 +26,10 @@ class MultipleChoiceCardFront extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const FaceLabel('QUESTION'),
-          Text(
+          InlineHtmlText(
             card.q,
-            style: theme.textTheme.titleMedium?.copyWith(
+            baseStyle: (theme.textTheme.titleMedium ?? const TextStyle())
+                .copyWith(
               fontSize: 17,
               height: 1.4,
               color: AppColors.text,
@@ -81,9 +83,10 @@ class MultipleChoiceCardBack extends StatelessWidget {
           children: [
             const FaceLabel('CORRECT ANSWER'),
             if (correctSafe)
-              Text(
+              InlineHtmlText(
                 '${String.fromCharCode(65 + correctIdx)} · ${card.choices[correctIdx]}',
-                style: theme.textTheme.titleMedium?.copyWith(
+                baseStyle: (theme.textTheme.titleMedium ?? const TextStyle())
+                    .copyWith(
                   fontSize: 16.5,
                   height: 1.45,
                   color: Colors.white,
@@ -99,9 +102,10 @@ class MultipleChoiceCardBack extends StatelessWidget {
               ),
             if (card.explanation != null && card.explanation!.isNotEmpty) ...[
               const SizedBox(height: 14),
-              Text(
+              InlineHtmlText(
                 card.explanation!,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                baseStyle: (theme.textTheme.bodyMedium ?? const TextStyle())
+                    .copyWith(
                   fontSize: 14,
                   color: AppColors.muted,
                   height: 1.55,
@@ -110,9 +114,10 @@ class MultipleChoiceCardBack extends StatelessWidget {
             ],
             if (card.why.isNotEmpty) ...[
               const SizedBox(height: 10),
-              Text(
+              InlineHtmlText(
                 card.why,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                baseStyle: (theme.textTheme.bodyMedium ?? const TextStyle())
+                    .copyWith(
                   fontSize: 14,
                   color: AppColors.muted,
                   height: 1.55,
@@ -196,9 +201,9 @@ class _ChoiceRow extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text(
+                child: InlineHtmlText(
                   text,
-                  style: TextStyle(
+                  baseStyle: TextStyle(
                     fontSize: 14.5,
                     height: 1.45,
                     color: isCorrect ? Colors.white : AppColors.text,

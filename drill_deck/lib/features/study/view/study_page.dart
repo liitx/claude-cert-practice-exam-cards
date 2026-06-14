@@ -1,6 +1,7 @@
 import 'package:drill_deck/features/study/bloc/study_bloc.dart';
 import 'package:drill_deck/features/study/widgets/card_basic.dart';
 import 'package:drill_deck/features/study/widgets/card_mc.dart';
+import 'package:drill_deck/features/study/widgets/deck_selector.dart';
 import 'package:drill_deck/features/study/widgets/flip_card.dart';
 import 'package:drill_deck/models/card.dart';
 import 'package:drill_deck/models/deck.dart';
@@ -173,6 +174,10 @@ class _Ready extends StatelessWidget {
         _ProgressRail(progress: (state.idx + 1) / state.cards.length),
         const SizedBox(height: 14),
         _Header(deck: deck, idx: state.idx, total: state.cards.length),
+        if (state.allDecks.length > 1) ...[
+          const SizedBox(height: 12),
+          const DeckSelector(),
+        ],
         const SizedBox(height: 18),
         Expanded(
           child: GestureDetector(

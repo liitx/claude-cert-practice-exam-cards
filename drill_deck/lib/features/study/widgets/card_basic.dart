@@ -3,6 +3,7 @@ import 'package:drill_deck/models/card.dart';
 import 'package:drill_deck/models/scenario.dart';
 import 'package:drill_deck/theme/app_colors.dart';
 import 'package:drill_deck/theme/scenario_palette.dart';
+import 'package:drill_deck/widgets/inline_html_text.dart';
 import 'package:flutter/material.dart' hide Card;
 
 class BasicCardFront extends StatelessWidget {
@@ -22,9 +23,10 @@ class BasicCardFront extends StatelessWidget {
           const FaceLabel('SITUATION'),
           Expanded(
             child: SingleChildScrollView(
-              child: Text(
+              child: InlineHtmlText(
                 card.q,
-                style: theme.textTheme.titleMedium?.copyWith(
+                baseStyle: (theme.textTheme.titleMedium ?? const TextStyle())
+                    .copyWith(
                   fontSize: 18,
                   height: 1.45,
                   color: AppColors.text,
@@ -62,9 +64,11 @@ class BasicCardBack extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  InlineHtmlText(
                     card.a,
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    baseStyle:
+                        (theme.textTheme.titleMedium ?? const TextStyle())
+                            .copyWith(
                       fontSize: 16.5,
                       height: 1.5,
                       color: Colors.white,
@@ -73,9 +77,11 @@ class BasicCardBack extends StatelessWidget {
                   ),
                   if (card.why.isNotEmpty) ...[
                     const SizedBox(height: 14),
-                    Text(
+                    InlineHtmlText(
                       card.why,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      baseStyle: (theme.textTheme.bodyMedium ??
+                              const TextStyle())
+                          .copyWith(
                         fontSize: 14,
                         height: 1.55,
                         color: AppColors.muted,
