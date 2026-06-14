@@ -413,8 +413,22 @@ function openDeckModal(){
   render();
 }
 function closeModal(){modal=null;render();}
-function mset(k,v){modal[k]=v;render();}
-function mnest(p,k,v){modal[p]=modal[p]||{};modal[p][k]=v;render();}
+function mset(k,v){modal[k]=v;refreshSaveBtn();}
+function msetR(k,v){modal[k]=v;render();}
+function mnest(p,k,v){modal[p]=modal[p]||{};modal[p][k]=v;refreshSaveBtn();}
+function refreshSaveBtn(){
+  if(!modal)return;
+  const btn=document.querySelector('.btn-save');
+  if(!btn)return;
+  let valid=false;
+  if(modal.type==='card'){
+    const subjectOK=modal.newSubject?!!modal.newSubject.label.trim():!!modal.subject;
+    valid=!!(modal.q.trim()&&modal.a.trim()&&subjectOK);
+  }else if(modal.type==='deck'){
+    valid=!!(modal.name.trim()&&modal.firstLabel.trim());
+  }
+  btn.disabled=!valid;
+}
 function toggleAddSubject(){
   if(modal.newSubject)modal.newSubject=null;
   else modal.newSubject={label:'',color:PRESET_COLORS[0]};
@@ -535,7 +549,7 @@ function modalHTML(){
         </div>
 
         <label class="checkrow">
-          <input type="checkbox" ${modal.missed?'checked':''} onchange="mset('missed',this.checked)">
+          <input type="checkbox" ${modal.missed?'checked':''} onchange="msetR('missed',this.checked)">
           <span>I missed this one</span>
         </label>
 
