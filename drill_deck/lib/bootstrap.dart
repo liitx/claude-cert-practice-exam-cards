@@ -3,6 +3,8 @@ import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
 import 'package:drill_deck/app/view/app.dart';
+import 'package:drill_deck/repositories/decks_repository.dart';
+import 'package:drill_deck/repositories/library_repository.dart';
 import 'package:drill_deck/repositories/migration/legacy_migrator.dart';
 import 'package:drill_deck/repositories/storage_repository.dart';
 import 'package:flutter/widgets.dart';
@@ -37,7 +39,15 @@ Future<void> bootstrap() async {
         prefs: prefs,
         legacyMigrator: LegacyMigrator(),
       );
-      runApp(App(storageRepository: storage));
+      final library = LibraryRepository();
+      final decks = DecksRepository(storage: storage, library: library);
+      runApp(
+        App(
+          storageRepository: storage,
+          libraryRepository: library,
+          decksRepository: decks,
+        ),
+      );
     },
     (error, stackTrace) {
       log('uncaught error', error: error, stackTrace: stackTrace);
