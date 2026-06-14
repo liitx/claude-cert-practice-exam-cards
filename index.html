@@ -426,7 +426,7 @@ const LEGACY_KEY='cca-f-progress-v1';
 const REPO='liitx/claude-cert-practice-exam-cards';
 const SHARED_URL='./decks.json';
 
-let state={currentDeckId:'cca-f',userDecks:[],overlay:{cards:{},scenarios:{}},progress:{}};
+let state={currentDeckId:'cca-f',userDecks:[],overlay:{cards:{},scenarios:{}},progress:{},hiddenDecks:[]};
 let filter='miss';
 let idx=0;
 let flipped=false;
@@ -453,6 +453,7 @@ function load(){
       state.overlay.scenarios=state.overlay.scenarios||{};
       state.progress=state.progress||{};
       state.userDecks=state.userDecks||[];
+      state.hiddenDecks=Array.isArray(state.hiddenDecks)?state.hiddenDecks:[];
       if(parsed.view){
         if(typeof parsed.view.filter==='string')filter=parsed.view.filter;
         if(Number.isInteger(parsed.view.idx))idx=parsed.view.idx;
@@ -465,6 +466,7 @@ function load(){
     }
   }catch(e){}
   if(!getDeckBase(state.currentDeckId))state.currentDeckId='cca-f';
+  if(state.hiddenDecks.includes(state.currentDeckId))state.currentDeckId=firstVisibleDeckId();
   render();
   loadSharedDecks();
 }
@@ -647,8 +649,24 @@ function deleteDeck(){
   delete state.progress[d.id];
   if(state.overlay.cards)delete state.overlay.cards[d.id];
   if(state.overlay.scenarios)delete state.overlay.scenarios[d.id];
-  state.currentDeckId='cca-f';
+  state.currentDeckId=firstVisibleDeckId();
   save();idx=0;flipped=false;filter='all';render();
+}
+function hideDeck(){
+  const d=currentDeck();if(!d)return;
+  if(!confirm('Hide "'+d.name+'" from your decks? You can unhide later from the deck-meta row.'))return;
+  if(!state.hiddenDecks.includes(d.id))state.hiddenDecks.push(d.id);
+  state.currentDeckId=firstVisibleDeckId();
+  save();idx=0;flipped=false;filter='all';render();
+}
+function unhideAll(){
+  if(!state.hiddenDecks.length)return;
+  state.hiddenDecks=[];
+  save();render();
+}
+function firstVisibleDeckId(){
+  const all=[...BUILTIN_DECKS,...state.userDecks].filter(d=>!state.hiddenDecks.includes(d.id));
+  return all[0]?.id||BUILTIN_DECKS[0]?.id||'cca-f';
 }
 
 /* -------- modals -------- */
@@ -1833,7 +1851,7 @@ function render(){
   const reviewed=Object.keys(st).length;
   const pct=totalCards?Math.round((c.got/totalCards)*100):0;
 
-  const decks=[...BUILTIN_DECKS,...state.userDecks];
+  const decks=[...BUILTIN_DECKS,...state.userDecks].filter(x=>!state.hiddenDecks.includes(x.id));
   const deckOpts=decks.map(x=>`<option value="${esc(x.id)}" ${state.currentDeckId===x.id?'selected':''}>${esc(x.name)}</option>`).join('');
 
   const chips=[
@@ -1902,7 +1920,10 @@ function render(){
       · <button class="reset" onclick="openExportModal()">export</button>
       · <button class="reset" onclick="openImportModal()">import</button>
       · <button class="reset" onclick="openPromptModal()">ask claude</button>
-      ${!d.builtin?` · <button onclick="deleteDeck()">delete this deck</button>`:''}
+      ${d.builtin
+        ?` · <button onclick="hideDeck()">hide from my view</button>`
+        :` · <button onclick="deleteDeck()">delete this deck</button>`}
+      ${state.hiddenDecks.length?` · <button class="reset" onclick="unhideAll()">unhide ${state.hiddenDecks.length}</button>`:''}
     </div>
     ${modalHTML()}`;
 }
