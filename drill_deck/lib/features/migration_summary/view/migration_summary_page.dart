@@ -81,6 +81,24 @@ class _Summary extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.got,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  'FLUTTER WEB · phase 1',
+                  style: mono.chip.copyWith(
+                    color: theme.colorScheme.onSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               Text(
                 'drill_deck',
                 style: theme.textTheme.headlineSmall?.copyWith(
@@ -90,8 +108,11 @@ class _Summary extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'phase 1: scaffold + migration',
-                style: mono.hint,
+                'If you see this page, the Flutter Web build is live. '
+                'The static index.html on main is no longer being served. '
+                'This is the Phase 1 placeholder showing the migration '
+                'round-trip from localStorage into SharedPreferences.',
+                style: mono.hint.copyWith(height: 1.55),
               ),
               const SizedBox(height: 28),
               _SummaryRow(
