@@ -2,15 +2,24 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:drill_deck/features/study/bloc/study_bloc.dart';
 import 'package:drill_deck/models/card.dart';
 import 'package:drill_deck/models/deck.dart';
+import 'package:drill_deck/models/progress_state.dart';
 import 'package:drill_deck/repositories/decks_repository.dart';
+import 'package:drill_deck/repositories/progress_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:rxdart/subjects.dart';
 
 class _MockDecks extends Mock implements DecksRepository {}
 
+class _MockProgress extends Mock implements ProgressRepository {}
+
+void _registerFallbacks() {
+  registerFallbackValue(ProgressState.review);
+}
+
 void main() {
   late _MockDecks repo;
+  late _MockProgress progress;
   late BehaviorSubject<List<Deck>> stream;
 
   const deck = SharedDeck(
@@ -23,12 +32,20 @@ void main() {
     ],
   );
 
+  setUpAll(_registerFallbacks);
+
   setUp(() {
     repo = _MockDecks();
+    progress = _MockProgress();
     stream = BehaviorSubject<List<Deck>>.seeded(const []);
     when(repo.watch).thenAnswer((_) => stream.stream);
     when(() => repo.libraryLoaded).thenReturn(true);
     when(repo.refreshShared).thenAnswer((_) async {});
+    when(() => progress.watch(any())).thenAnswer((_) => const Stream.empty());
+    when(() => progress.current(any())).thenReturn(<String, ProgressState>{});
+    when(() => progress.toggle(any(), any(), any()))
+        .thenAnswer((_) async {});
+    when(() => progress.resetDeck(any())).thenAnswer((_) async {});
   });
 
   tearDown(() async {
@@ -38,7 +55,7 @@ void main() {
   group('StudyBloc', () {
     blocTest<StudyBloc, StudyState>(
       'becomes ready when decks arrive and picks the first deck by default',
-      build: () => StudyBloc(decksRepository: repo),
+      build: () => StudyBloc(decksRepository: repo, progressRepository: progress),
       act: (bloc) async {
         bloc.add(const StudyStarted());
         stream.add(const [deck]);
@@ -55,7 +72,7 @@ void main() {
 
     blocTest<StudyBloc, StudyState>(
       'StudyFlipped toggles flipped only when ready',
-      build: () => StudyBloc(decksRepository: repo),
+      build: () => StudyBloc(decksRepository: repo, progressRepository: progress),
       act: (bloc) async {
         bloc.add(const StudyStarted());
         stream.add(const [deck]);
@@ -70,7 +87,7 @@ void main() {
 
     blocTest<StudyBloc, StudyState>(
       'StudyNext / StudyPrev wrap around',
-      build: () => StudyBloc(decksRepository: repo),
+      build: () => StudyBloc(decksRepository: repo, progressRepository: progress),
       act: (bloc) async {
         bloc.add(const StudyStarted());
         stream.add(const [deck]);
@@ -86,7 +103,7 @@ void main() {
 
     blocTest<StudyBloc, StudyState>(
       'StudyDeckRequested switches to the requested deck if present',
-      build: () => StudyBloc(decksRepository: repo),
+      build: () => StudyBloc(decksRepository: repo, progressRepository: progress),
       act: (bloc) async {
         bloc.add(const StudyStarted());
         const second = SharedDeck(

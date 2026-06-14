@@ -24,6 +24,20 @@ final class StudyDecksReceived extends StudyEvent {
   List<Object?> get props => [decks];
 }
 
+final class StudyProgressReceived extends StudyEvent {
+  const StudyProgressReceived(this.progress);
+  final Map<String, ProgressState> progress;
+  @override
+  List<Object?> get props => [progress];
+}
+
+final class StudyFilterChanged extends StudyEvent {
+  const StudyFilterChanged(this.filter);
+  final StudyFilter filter;
+  @override
+  List<Object?> get props => [filter];
+}
+
 final class StudyFlipped extends StudyEvent {
   const StudyFlipped();
 }
@@ -34,4 +48,16 @@ final class StudyNext extends StudyEvent {
 
 final class StudyPrev extends StudyEvent {
   const StudyPrev();
+}
+
+final class StudyMarkReview extends StudyEvent {
+  const StudyMarkReview();
+}
+
+final class StudyMarkGot extends StudyEvent {
+  const StudyMarkGot();
+}
+
+final class StudyResetProgress extends StudyEvent {
+  const StudyResetProgress();
 }

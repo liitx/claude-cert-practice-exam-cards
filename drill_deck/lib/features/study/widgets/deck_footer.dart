@@ -2,10 +2,12 @@ import 'package:drill_deck/features/ask_claude/view/ask_claude_sheet.dart';
 import 'package:drill_deck/features/backup/view/export_sheet.dart';
 import 'package:drill_deck/features/backup/view/import_sheet.dart';
 import 'package:drill_deck/features/library/share_action.dart';
+import 'package:drill_deck/features/study/bloc/study_bloc.dart';
 import 'package:drill_deck/models/deck.dart';
 import 'package:drill_deck/theme/app_colors.dart';
 import 'package:drill_deck/theme/mono_typography.dart';
 import 'package:flutter/material.dart' hide Card;
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// The strip of small action links under the card. Mirrors the static site's
 /// deck-meta row (share / export / import / ask claude). Other items
@@ -43,18 +45,48 @@ class DeckFooter extends StatelessWidget {
             onTap: () => AskClaudeSheet.show(context, deck),
           ),
           _FooterLink(
-            label: 'subjects (phase 4)',
-            disabled: true,
-            mono: mono,
+            label: 'reset progress',
+            onTap: () => _confirmReset(context, deck),
           ),
           _FooterLink(
-            label: 'reset progress (phase 3)',
+            label: 'subjects (phase 4)',
             disabled: true,
             mono: mono,
           ),
         ],
       ),
     );
+  }
+}
+
+Future<void> _confirmReset(BuildContext context, Deck deck) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: const Text('Reset progress?'),
+      content: Text(
+        'Clears all Review and Got-it marks for "${deck.name}". '
+        'Decks and cards stay where they are.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.miss,
+            foregroundColor: AppColors.ink,
+          ),
+          child: const Text('Reset'),
+        ),
+      ],
+    ),
+  );
+  if (ok == true && context.mounted) {
+    context.read<StudyBloc>().add(const StudyResetProgress());
   }
 }
 

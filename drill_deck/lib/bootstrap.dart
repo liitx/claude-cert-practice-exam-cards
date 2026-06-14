@@ -6,6 +6,7 @@ import 'package:drill_deck/app/view/app.dart';
 import 'package:drill_deck/repositories/decks_repository.dart';
 import 'package:drill_deck/repositories/library_repository.dart';
 import 'package:drill_deck/repositories/migration/legacy_migrator.dart';
+import 'package:drill_deck/repositories/progress_repository.dart';
 import 'package:drill_deck/repositories/storage_repository.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,11 +42,13 @@ Future<void> bootstrap() async {
       );
       final library = LibraryRepository();
       final decks = DecksRepository(storage: storage, library: library);
+      final progress = ProgressRepository(storage: storage);
       runApp(
         App(
           storageRepository: storage,
           libraryRepository: library,
           decksRepository: decks,
+          progressRepository: progress,
         ),
       );
     },

@@ -1,6 +1,7 @@
 import 'package:drill_deck/app_bloc/app_bloc.dart';
 import 'package:drill_deck/repositories/decks_repository.dart';
 import 'package:drill_deck/repositories/library_repository.dart';
+import 'package:drill_deck/repositories/progress_repository.dart';
 import 'package:drill_deck/repositories/storage_repository.dart';
 import 'package:drill_deck/routing/app_router.dart';
 import 'package:drill_deck/theme/app_theme.dart';
@@ -12,12 +13,14 @@ class App extends StatefulWidget {
     required this.storageRepository,
     required this.libraryRepository,
     required this.decksRepository,
+    required this.progressRepository,
     super.key,
   });
 
   final StorageRepository storageRepository;
   final LibraryRepository libraryRepository;
   final DecksRepository decksRepository;
+  final ProgressRepository progressRepository;
 
   @override
   State<App> createState() => _AppState();
@@ -33,6 +36,7 @@ class _AppState extends State<App> {
         RepositoryProvider.value(value: widget.storageRepository),
         RepositoryProvider.value(value: widget.libraryRepository),
         RepositoryProvider.value(value: widget.decksRepository),
+        RepositoryProvider.value(value: widget.progressRepository),
       ],
       child: BlocProvider(
         create: (_) => AppBloc(storageRepository: widget.storageRepository)

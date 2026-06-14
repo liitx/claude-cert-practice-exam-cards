@@ -1,13 +1,20 @@
 import 'package:drill_deck/features/study/bloc/study_bloc.dart';
 import 'package:drill_deck/features/study/widgets/card_basic.dart';
+import 'package:drill_deck/features/study/widgets/card_fib.dart';
 import 'package:drill_deck/features/study/widgets/card_mc.dart';
+import 'package:drill_deck/features/study/widgets/card_ms.dart';
+import 'package:drill_deck/features/study/widgets/card_tf.dart';
 import 'package:drill_deck/features/study/widgets/deck_footer.dart';
 import 'package:drill_deck/features/study/widgets/deck_selector.dart';
+import 'package:drill_deck/features/study/widgets/filter_chips.dart';
 import 'package:drill_deck/features/study/widgets/flip_card.dart';
+import 'package:drill_deck/features/study/widgets/study_controls.dart';
 import 'package:drill_deck/models/card.dart';
 import 'package:drill_deck/models/deck.dart';
 import 'package:drill_deck/models/scenario.dart';
+import 'package:drill_deck/models/study_filter.dart';
 import 'package:drill_deck/repositories/decks_repository.dart';
+import 'package:drill_deck/repositories/progress_repository.dart';
 import 'package:drill_deck/theme/app_colors.dart';
 import 'package:drill_deck/theme/mono_typography.dart';
 import 'package:drill_deck/theme/scenario_palette.dart';
@@ -24,6 +31,7 @@ class StudyPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => StudyBloc(
         decksRepository: context.read<DecksRepository>(),
+        progressRepository: context.read<ProgressRepository>(),
         initialDeckId: deckId,
       )..add(const StudyStarted()),
       child: _StudyShell(deckId: deckId),
@@ -76,6 +84,16 @@ class _StudyShellState extends State<_StudyShell> {
     }
     if (key == LogicalKeyboardKey.arrowLeft) {
       bloc.add(const StudyPrev());
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.digit1 ||
+        key == LogicalKeyboardKey.numpad1) {
+      bloc.add(const StudyMarkReview());
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.digit2 ||
+        key == LogicalKeyboardKey.numpad2) {
+      bloc.add(const StudyMarkGot());
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -179,7 +197,9 @@ class _Ready extends StatelessWidget {
           const SizedBox(height: 12),
           const DeckSelector(),
         ],
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
+        const FilterChips(),
+        const SizedBox(height: 16),
         Expanded(
           child: Center(
             child: ConstrainedBox(
@@ -201,13 +221,10 @@ class _Ready extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _NavRow(
-          onPrev: () => context.read<StudyBloc>().add(const StudyPrev()),
-          onNext: () => context.read<StudyBloc>().add(const StudyNext()),
-        ),
+        const StudyControls(),
         const SizedBox(height: 14),
         Text(
-          'space flip · ← → move',
+          'space flip · ← → move · 1 review · 2 got it',
           textAlign: TextAlign.center,
           style: mono.hint,
         ),
@@ -222,7 +239,11 @@ class _Ready extends StatelessWidget {
       BasicCard() => BasicCardFront(card: card, scenario: scenario),
       MultipleChoiceCard() =>
         MultipleChoiceCardFront(card: card, scenario: scenario),
-      _ => _UnsupportedFace(card: card, scenario: scenario, isBack: false),
+      MultiSelectCard() =>
+        MultiSelectCardFront(card: card, scenario: scenario),
+      TrueFalseCard() => TrueFalseCardFront(card: card, scenario: scenario),
+      FillInBlankCard() =>
+        FillInBlankCardFront(card: card, scenario: scenario),
     };
   }
 
@@ -231,7 +252,11 @@ class _Ready extends StatelessWidget {
       BasicCard() => BasicCardBack(card: card, scenario: scenario),
       MultipleChoiceCard() =>
         MultipleChoiceCardBack(card: card, scenario: scenario),
-      _ => _UnsupportedFace(card: card, scenario: scenario, isBack: true),
+      MultiSelectCard() =>
+        MultiSelectCardBack(card: card, scenario: scenario),
+      TrueFalseCard() => TrueFalseCardBack(card: card, scenario: scenario),
+      FillInBlankCard() =>
+        FillInBlankCardBack(card: card, scenario: scenario),
     };
   }
 
@@ -325,73 +350,3 @@ class _ProgressRail extends StatelessWidget {
   }
 }
 
-class _NavRow extends StatelessWidget {
-  const _NavRow({required this.onPrev, required this.onNext});
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-
-  @override
-  Widget build(BuildContext context) {
-    final mono = Theme.of(context).extension<MonoTypography>()!;
-    final btnStyle = OutlinedButton.styleFrom(
-      foregroundColor: AppColors.muted,
-      side: const BorderSide(color: AppColors.line),
-      backgroundColor: AppColors.surface,
-      minimumSize: const Size.fromHeight(48),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      textStyle: mono.counter.copyWith(fontSize: 16),
-    );
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            style: btnStyle,
-            onPressed: onPrev,
-            child: const Text('←'),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: OutlinedButton(
-            style: btnStyle,
-            onPressed: onNext,
-            child: const Text('→'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _UnsupportedFace extends StatelessWidget {
-  const _UnsupportedFace({
-    required this.card,
-    required this.scenario,
-    required this.isBack,
-  });
-  final Card card;
-  final Scenario scenario;
-  final bool isBack;
-
-  @override
-  Widget build(BuildContext context) {
-    final mono = Theme.of(context).extension<MonoTypography>()!;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: isBack ? AppColors.surface2 : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Center(
-          child: Text(
-            'Card type ${card.type.id} renders in phase 3.\nFlip back and continue.',
-            textAlign: TextAlign.center,
-            style: mono.hint,
-          ),
-        ),
-      ),
-    );
-  }
-}

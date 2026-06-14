@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:drill_deck/models/card.dart';
 import 'package:drill_deck/models/deck.dart';
+import 'package:drill_deck/models/progress_state.dart';
+import 'package:drill_deck/models/study_filter.dart';
 import 'package:drill_deck/repositories/decks_repository.dart';
+import 'package:drill_deck/repositories/progress_repository.dart';
 import 'package:equatable/equatable.dart';
 
 part 'study_event.dart';
@@ -12,25 +15,34 @@ part 'study_state.dart';
 class StudyBloc extends Bloc<StudyEvent, StudyState> {
   StudyBloc({
     required DecksRepository decksRepository,
+    required ProgressRepository progressRepository,
     String? initialDeckId,
   })  : _decks = decksRepository,
+        _progress = progressRepository,
         _requestedDeckId = initialDeckId,
         super(const StudyState.initial()) {
     on<StudyStarted>(_onStarted);
     on<StudyDeckRequested>(_onDeckRequested);
     on<StudyDecksReceived>(_onDecksReceived);
+    on<StudyProgressReceived>(_onProgressReceived);
+    on<StudyFilterChanged>(_onFilterChanged);
     on<StudyFlipped>(_onFlipped);
     on<StudyNext>(_onNext);
     on<StudyPrev>(_onPrev);
+    on<StudyMarkReview>(_onMarkReview);
+    on<StudyMarkGot>(_onMarkGot);
+    on<StudyResetProgress>(_onResetProgress);
 
-    _subscription = _decks.watch().listen(
+    _decksSub = _decks.watch().listen(
           (decks) => add(StudyDecksReceived(decks)),
         );
   }
 
   final DecksRepository _decks;
+  final ProgressRepository _progress;
   String? _requestedDeckId;
-  StreamSubscription<List<Deck>>? _subscription;
+  StreamSubscription<List<Deck>>? _decksSub;
+  StreamSubscription<Map<String, ProgressState>>? _progressSub;
 
   Future<void> _onStarted(
     StudyStarted event,
@@ -47,9 +59,9 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
     Emitter<StudyState> emit,
   ) {
     _requestedDeckId = event.deckId;
-    final decks = state.allDecks;
-    final deck = _pickDeck(decks);
-    _emitForDeck(emit, decks, deck);
+    final deck = _pickDeck(state.allDecks);
+    _switchProgressSubscription(deck?.id);
+    _emitForDeck(emit, state.allDecks, deck, resetIdx: true);
   }
 
   void _onDecksReceived(
@@ -58,29 +70,88 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
   ) {
     final decks = event.decks;
     final deck = _pickDeck(decks);
-    _emitForDeck(emit, decks, deck);
+    final isNewDeck = deck?.id != state.deck?.id;
+    if (isNewDeck) _switchProgressSubscription(deck?.id);
+    _emitForDeck(emit, decks, deck, resetIdx: isNewDeck);
   }
 
-  void _emitForDeck(Emitter<StudyState> emit, List<Deck> allDecks, Deck? deck) {
+  void _onProgressReceived(
+    StudyProgressReceived event,
+    Emitter<StudyState> emit,
+  ) {
+    _emitForDeck(
+      emit,
+      state.allDecks,
+      state.deck,
+      progressOverride: event.progress,
+    );
+  }
+
+  void _onFilterChanged(
+    StudyFilterChanged event,
+    Emitter<StudyState> emit,
+  ) {
+    if (event.filter == state.filter) return;
+    _emitForDeck(
+      emit,
+      state.allDecks,
+      state.deck,
+      filterOverride: event.filter,
+      resetIdx: true,
+    );
+  }
+
+  void _switchProgressSubscription(String? deckId) {
+    _progressSub?.cancel();
+    if (deckId == null) {
+      _progressSub = null;
+      return;
+    }
+    _progressSub = _progress.watch(deckId).listen(
+          (p) => add(StudyProgressReceived(p)),
+        );
+  }
+
+  void _emitForDeck(
+    Emitter<StudyState> emit,
+    List<Deck> allDecks,
+    Deck? deck, {
+    Map<String, ProgressState>? progressOverride,
+    StudyFilter? filterOverride,
+    bool resetIdx = false,
+  }) {
     if (deck == null) {
       emit(
         state.copyWith(
           status: allDecks.isEmpty ? StudyStatus.loading : StudyStatus.empty,
           allDecks: allDecks,
+          progress: progressOverride ?? const {},
+          counts: const StudyCounts.zero(),
         ),
       );
       return;
     }
-    final cards = deck.cards;
-    final clampedIdx = cards.isEmpty ? 0 : state.idx.clamp(0, cards.length - 1);
+    final progress = progressOverride ??
+        (deck.id == state.deck?.id
+            ? state.progress
+            : _progress.current(deck.id));
+    final filter = filterOverride ?? state.filter;
+    final filtered = _filterCards(deck.cards, filter, progress);
+    final counts = _countCards(deck.cards, progress);
+    final newIdx = resetIdx
+        ? 0
+        : (filtered.isEmpty ? 0 : state.idx.clamp(0, filtered.length - 1));
     emit(
       state.copyWith(
-        status: cards.isEmpty ? StudyStatus.empty : StudyStatus.ready,
+        status: filtered.isEmpty ? StudyStatus.empty : StudyStatus.ready,
         deck: deck,
-        cards: cards,
-        idx: clampedIdx,
+        cards: filtered,
+        idx: newIdx,
         flipped: false,
         allDecks: allDecks,
+        progress: progress,
+        filter: filter,
+        counts: counts,
       ),
     );
   }
@@ -94,6 +165,37 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
       }
     }
     return decks.first;
+  }
+
+  List<Card> _filterCards(
+    List<Card> all,
+    StudyFilter filter,
+    Map<String, ProgressState> progress,
+  ) {
+    return switch (filter) {
+      StudyFilter.all => all,
+      StudyFilter.miss => all.where((c) => c.miss).toList(),
+      StudyFilter.review =>
+        all.where((c) => progress[c.id] == ProgressState.review).toList(),
+      StudyFilter.got =>
+        all.where((c) => progress[c.id] == ProgressState.got).toList(),
+    };
+  }
+
+  StudyCounts _countCards(
+    List<Card> all,
+    Map<String, ProgressState> progress,
+  ) {
+    var review = 0;
+    var got = 0;
+    var miss = 0;
+    for (final c in all) {
+      final p = progress[c.id];
+      if (p == ProgressState.review) review++;
+      if (p == ProgressState.got) got++;
+      if (c.miss) miss++;
+    }
+    return StudyCounts(all: all.length, miss: miss, review: review, got: got);
   }
 
   void _onFlipped(StudyFlipped event, Emitter<StudyState> emit) {
@@ -113,9 +215,39 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
     emit(state.copyWith(idx: prev, flipped: false));
   }
 
+  Future<void> _onMarkReview(
+    StudyMarkReview event,
+    Emitter<StudyState> emit,
+  ) async {
+    final card = state.currentCard;
+    final deck = state.deck;
+    if (card == null || deck == null) return;
+    await _progress.toggle(deck.id, card.id, ProgressState.review);
+  }
+
+  Future<void> _onMarkGot(
+    StudyMarkGot event,
+    Emitter<StudyState> emit,
+  ) async {
+    final card = state.currentCard;
+    final deck = state.deck;
+    if (card == null || deck == null) return;
+    await _progress.toggle(deck.id, card.id, ProgressState.got);
+  }
+
+  Future<void> _onResetProgress(
+    StudyResetProgress event,
+    Emitter<StudyState> emit,
+  ) async {
+    final deck = state.deck;
+    if (deck == null) return;
+    await _progress.resetDeck(deck.id);
+  }
+
   @override
   Future<void> close() async {
-    await _subscription?.cancel();
+    await _decksSub?.cancel();
+    await _progressSub?.cancel();
     return super.close();
   }
 }
