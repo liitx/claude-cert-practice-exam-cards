@@ -49,6 +49,24 @@ The **subjects** link in the footer row opens a sheet to add, rename, and delete
 
 ---
 
+## Skip the typing: have Claude write the deck
+
+The app has a prompt generator built in. Tap **ask claude** in the footer row, fill in a topic, pick a card type and how many you want, and copy the prompt. Paste it into Claude, paste the JSON Claude gives you back into the **import** sheet, done.
+
+The Import sheet validates the JSON against the schema and points at any specific problems (missing fields, wrong types, out-of-range indices) before anything lands.
+
+| Type | Required fields per card |
+| --- | --- |
+| `basic` | `a` (correct answer text) |
+| `mc` | `choices` (2+ strings), `correct` (index) |
+| `ms` | `choices`, `correct` (array of indices) |
+| `tf` | `correct` (`true` or `false`) |
+| `fib` | `accepted` (array of accepted answers) |
+
+Every card type also takes `topic`, `q`, `why`, `miss`, `pick`, and `image` as optional fields where they apply.
+
+---
+
 ## Share back to the library
 
 Tap **share to library** at the bottom of any deck where you've added something. A GitHub issue opens with your deck as JSON.

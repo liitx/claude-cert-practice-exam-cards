@@ -696,7 +696,12 @@ function closeModal(){modal=null;render();}
 function mset(k,v){modal[k]=v;refreshUI();}
 function msetR(k,v){modal[k]=v;render();}
 function mnest(p,k,v){modal[p]=modal[p]||{};modal[p][k]=v;refreshUI();}
-function refreshUI(){refreshSaveBtn();refreshSubjectEditorBtn();}
+function refreshUI(){refreshSaveBtn();refreshSubjectEditorBtn();refreshPromptPreview();}
+function refreshPromptPreview(){
+  if(!modal||modal.type!=='ai-prompt')return;
+  const ta=document.getElementById('claude-prompt-preview');
+  if(ta)ta.value=buildClaudePrompt(modal);
+}
 function refreshSaveBtn(){
   if(!modal)return;
   const btn=document.querySelector('.btn-save');
@@ -847,6 +852,126 @@ function openManageSubjectsModal(){
   modal={type:'manage-subjects'};
   render();
 }
+function openPromptModal(){
+  modal={type:'ai-prompt',topic:'',count:'10',cardType:'mc',target:'new'};
+  render();
+}
+function exampleCard(t,key){
+  key=key||'KEY1';
+  if(t==='mc')return `{
+        "scn": "${key}",
+        "topic": "Subtopic",
+        "q": "Question text.",
+        "type": "mc",
+        "choices": ["First option", "Second option", "Third option", "Fourth option"],
+        "correct": 0,
+        "why": "One-sentence reasoning."
+      }`;
+  if(t==='ms')return `{
+        "scn": "${key}",
+        "topic": "Subtopic",
+        "q": "Question text.",
+        "type": "ms",
+        "choices": ["First", "Second", "Third", "Fourth"],
+        "correct": [0, 2],
+        "why": "One-sentence reasoning."
+      }`;
+  if(t==='tf')return `{
+        "scn": "${key}",
+        "topic": "Subtopic",
+        "q": "Statement that is either true or false.",
+        "type": "tf",
+        "correct": true,
+        "why": "One-sentence reasoning."
+      }`;
+  if(t==='fib')return `{
+        "scn": "${key}",
+        "topic": "Subtopic",
+        "q": "Question with a ___ to fill in.",
+        "type": "fib",
+        "accepted": ["primary answer", "alternate spelling"],
+        "why": "One-sentence reasoning."
+      }`;
+  return `{
+        "scn": "${key}",
+        "topic": "Subtopic",
+        "q": "Situation or question.",
+        "a": "Correct approach.",
+        "why": "One-sentence reasoning."
+      }`;
+}
+function buildClaudePrompt(m){
+  const topic=(m.topic||'').trim()||'YOUR_TOPIC';
+  const n=Math.max(1,Math.min(50,parseInt(m.count,10)||10));
+  const ct=m.cardType||'mc';
+  const target=m.target||'new';
+  let intro,schema,subjectsHint='';
+  if(target==='current'){
+    const deckId=state.currentDeckId;
+    const scenarios=deckScenarios(deckId);
+    const subjList=Object.entries(scenarios).map(([k,v])=>`  ${k} = ${v.label}`).join('\n');
+    intro=`Generate ${n} flashcards about "${topic}" to extend my study deck "${currentDeck().name}". Return ONE JSON object matching the schema below. No prose outside the JSON.`;
+    subjectsHint=`Use ONLY these existing subject keys for the "scn" field. Do not invent new keys.\n${subjList}\n\n`;
+    const firstKey=Object.keys(scenarios)[0]||'KEY';
+    schema=`{
+  "kind": "cards-for-deck",
+  "targetDeckId": "${deckId}",
+  "cards": [
+    ${exampleCard(ct,firstKey)}
+  ]
+}`;
+  }else{
+    intro=`Generate ${n} flashcards about "${topic}" for a study app. Return ONE JSON object matching the schema below. No prose outside the JSON.`;
+    schema=`{
+  "kind": "deck",
+  "deck": {
+    "name": "${topic}",
+    "scenarios": {
+      "KEY1": { "label": "Subject name", "color": "#7c83ff" },
+      "KEY2": { "label": "Another subject", "color": "#5fb89a" }
+    },
+    "cards": [
+      ${exampleCard(ct,'KEY1')}
+    ]
+  }
+}`;
+  }
+  return `${intro}
+
+${subjectsHint}\`\`\`json
+${schema}
+\`\`\`
+
+Card types and their fields:
+- "mc"    multiple choice. fields: "choices" (2-8 strings), "correct" (integer index into choices)
+- "ms"    select all that apply. fields: "choices", "correct" (array of integer indices)
+- "tf"    true/false. fields: "correct" (boolean), no "choices"
+- "fib"   fill in the blank. fields: "accepted" (array of accepted-answer strings)
+- "basic" situation + answer. fields: "a" (correct answer text)
+
+Use "${ct}" for most cards${ct!=='basic'?'. Mix in other types only when genuinely better for a question.':'.'}
+
+Every card needs "scn", "topic", "q", "type", and the type's required fields. "why" is a short reasoning blurb and is strongly recommended.
+
+Style:
+- Questions should test reasoning or judgment, not pure recall where possible.
+- Wrong choices for mc/ms should be plausible distractors, not obvious filler.
+- "why" should explain the underlying principle, not restate the answer.
+- Keep wording tight.
+
+Constraints:
+- Subject keys must be 1-8 alphanumeric characters.
+- Colors must be #rrggbb hex.
+- "correct" indices for mc/ms must be valid positions in "choices".`;
+}
+function copyClaudePrompt(){
+  const text=buildClaudePrompt(modal);
+  const note=document.getElementById('claude-copy-note');
+  const done=ok=>{if(note)note.textContent=ok?'Copied. Paste into Claude.':'Copy failed — select the text and copy manually.';};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>done(true),()=>done(false));
+  }else done(false);
+}
 function saveNewSubject(){
   if(!modal||!modal.newSubject||!modal.newSubject.label.trim())return;
   const deckId=state.currentDeckId;
@@ -863,13 +988,105 @@ function saveNewSubject(){
   modal.newSubject=null;
   render();
 }
+const ALLOWED_TYPES_SET=new Set(['basic','mc','ms','tf','fib']);
+function validateCardSchema(c,scenarios){
+  const errs=[];
+  if(!c||typeof c!=='object')return ['not an object'];
+  if(!c.q||typeof c.q!=='string')errs.push('q (question) required');
+  if(!c.scn||typeof c.scn!=='string')errs.push('scn (subject key) required');
+  else if(scenarios&&!(c.scn in scenarios))errs.push(`unknown subject "${c.scn}"`);
+  if(c.topic!==undefined&&typeof c.topic!=='string')errs.push('topic must be a string');
+  const t=c.type||'basic';
+  if(!ALLOWED_TYPES_SET.has(t))errs.push(`unknown type "${t}", expected basic/mc/ms/tf/fib`);
+  if(t==='basic'){
+    if(!c.a||typeof c.a!=='string')errs.push('a (correct answer) required for basic cards');
+  }else if(t==='mc'){
+    if(!Array.isArray(c.choices)||c.choices.length<2)errs.push('mc needs choices array with 2+ items');
+    else if(c.choices.some(x=>typeof x!=='string'||!x.trim()))errs.push('mc choices must be non-empty strings');
+    if(typeof c.correct!=='number'||!Number.isInteger(c.correct))errs.push('mc correct must be an integer index');
+    else if(Array.isArray(c.choices)&&(c.correct<0||c.correct>=c.choices.length))errs.push('mc correct out of range');
+  }else if(t==='ms'){
+    if(!Array.isArray(c.choices)||c.choices.length<2)errs.push('ms needs choices array with 2+ items');
+    if(!Array.isArray(c.correct)||c.correct.length===0)errs.push('ms correct must be a non-empty array of indices');
+    else if(Array.isArray(c.choices)&&c.correct.some(i=>!Number.isInteger(i)||i<0||i>=c.choices.length))errs.push('ms correct contains invalid index');
+  }else if(t==='tf'){
+    if(typeof c.correct!=='boolean')errs.push('tf correct must be boolean');
+  }else if(t==='fib'){
+    if(!Array.isArray(c.accepted)||c.accepted.length===0)errs.push('fib needs accepted array of strings');
+    else if(c.accepted.some(x=>typeof x!=='string'||!x.trim()))errs.push('fib accepted entries must be non-empty strings');
+  }
+  return errs;
+}
+function validateDeckSchema(d){
+  const errs=[];
+  if(!d||typeof d!=='object')return ['deck not an object'];
+  if(!d.name||typeof d.name!=='string')errs.push('deck.name required');
+  if(!d.scenarios||typeof d.scenarios!=='object')errs.push('deck.scenarios required');
+  else{
+    for(const[k,v]of Object.entries(d.scenarios)){
+      if(!/^[A-Za-z0-9]{1,8}$/.test(k))errs.push(`scenarios["${k}"] key must be 1-8 letters/digits`);
+      if(!v||typeof v!=='object'){errs.push(`scenarios["${k}"] not an object`);continue;}
+      if(!v.label||typeof v.label!=='string')errs.push(`scenarios["${k}"].label required`);
+      if(!v.color||typeof v.color!=='string'||!/^#[0-9a-fA-F]{6}$/.test(v.color))errs.push(`scenarios["${k}"].color must be #rrggbb`);
+    }
+  }
+  if(!Array.isArray(d.cards)||d.cards.length===0)errs.push('deck.cards must be a non-empty array');
+  else d.cards.forEach((c,i)=>{
+    const ce=validateCardSchema(c,d.scenarios);
+    ce.forEach(e=>errs.push(`cards[${i}]: ${e}`));
+  });
+  return errs;
+}
+function validateImport(data){
+  if(!data||typeof data!=='object')return ['must be a JSON object'];
+  if(!data.kind)return ['missing "kind" field. expected "deck", "overlay", "cards-for-deck", or "all"'];
+  if(data.kind==='deck'||data.kind==='new-deck'){
+    return validateDeckSchema(data.deck);
+  }
+  if(data.kind==='overlay'||data.kind==='cards-for-deck'){
+    const errs=[];
+    if(!data.targetDeckId||typeof data.targetDeckId!=='string')errs.push('targetDeckId required');
+    const targetScn=data.targetDeckId?deckScenarios(data.targetDeckId):null;
+    const localScn={...(targetScn||{}),...(data.scenarios||{})};
+    if(data.scenarios){
+      for(const[k,v]of Object.entries(data.scenarios)){
+        if(!/^[A-Za-z0-9]{1,8}$/.test(k))errs.push(`scenarios["${k}"] key must be 1-8 letters/digits`);
+        if(!v||!v.label||!v.color||!/^#[0-9a-fA-F]{6}$/.test(v.color))errs.push(`scenarios["${k}"] must have label and #rrggbb color`);
+      }
+    }
+    if(Array.isArray(data.cards))data.cards.forEach((c,i)=>{
+      const ce=validateCardSchema(c,localScn);
+      ce.forEach(e=>errs.push(`cards[${i}]: ${e}`));
+    });
+    else if(!data.scenarios)errs.push('cards or scenarios array required');
+    return errs;
+  }
+  if(data.kind==='all'){
+    const errs=[];
+    if(data.userDecks){
+      if(!Array.isArray(data.userDecks))errs.push('userDecks must be an array');
+      else data.userDecks.forEach((d,i)=>{
+        const de=validateDeckSchema(d);
+        de.forEach(e=>errs.push(`userDecks[${i}]: ${e}`));
+      });
+    }
+    return errs;
+  }
+  return [`unknown kind "${data.kind}"`];
+}
+
 function doImport(){
   if(!modal.text.trim()){modal.error='Paste JSON first.';render();return;}
   let data;
   try{data=JSON.parse(modal.text);}
   catch(e){modal.error='Could not parse JSON: '+e.message;render();return;}
-  if(!data||typeof data!=='object'){modal.error='JSON must be an object.';render();return;}
-  if(!data.kind){modal.error='Missing "kind" field. Use JSON exported from this app.';render();return;}
+  const schemaErrs=validateImport(data);
+  if(schemaErrs.length){
+    modal.error='Schema problems:\n• '+schemaErrs.slice(0,12).join('\n• ')+(schemaErrs.length>12?`\n…and ${schemaErrs.length-12} more`:'');
+    render();return;
+  }
+  if(data.kind==='new-deck')data.kind='deck';
+  if(data.kind==='cards-for-deck')data.kind='overlay';
   try{
     if(data.kind==='all'){
       const existingIds=new Set(state.userDecks.map(d=>d.id));
@@ -1313,6 +1530,53 @@ function modalHTML(){
       </div>
     </div>`;
   }
+  if(modal.type==='ai-prompt'){
+    const d=currentDeck();
+    const types=[['mc','Multiple choice'],['ms','Select all'],['tf','True / False'],['fib','Fill blank'],['basic','Basic']];
+    return `<div class="backdrop" onclick="if(event.target===this)closeModal()">
+      <div class="sheet" role="dialog" aria-modal="true">
+        <h2>Ask Claude to generate a deck</h2>
+        <div class="sub">Pick a topic and a card type. Copy the prompt. Paste into Claude. Paste Claude's JSON into the <b>import</b> sheet.</div>
+
+        <div class="field">
+          <label>Topic</label>
+          <input type="text" placeholder="e.g. Kubernetes networking, blood gases, ancient Greek myth" value="${esc(modal.topic||'')}" oninput="mset('topic',this.value)" autofocus>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>How many cards</label>
+            <input type="number" min="1" max="50" value="${esc(String(modal.count||10))}" oninput="mset('count',this.value)">
+          </div>
+          <div class="field">
+            <label>Default card type</label>
+            <div class="type-tabs" style="margin-top:6px">
+              ${types.map(([v,l])=>`<button type="button" class="type-tab ${modal.cardType===v?'on':''}" onclick="msetR('cardType','${v}')">${esc(l)}</button>`).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Add to</label>
+          <div class="type-tabs" style="margin-top:6px">
+            <button type="button" class="type-tab ${modal.target==='new'?'on':''}" onclick="msetR('target','new')">New deck</button>
+            <button type="button" class="type-tab ${modal.target==='current'?'on':''}" onclick="msetR('target','current')">Current deck (${esc(d.name)})</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Prompt for Claude &middot; click to select all</label>
+          <textarea id="claude-prompt-preview" readonly style="min-height:200px;font-family:var(--mono);font-size:11.5px;line-height:1.55" onclick="this.select()">${esc(buildClaudePrompt(modal))}</textarea>
+          <div id="claude-copy-note" style="margin-top:8px;font-family:var(--mono);font-size:12px;color:var(--got);min-height:18px"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-cancel" onclick="closeModal()">Close</button>
+          <button class="btn btn-save" onclick="copyClaudePrompt()">Copy prompt</button>
+        </div>
+      </div>
+    </div>`;
+  }
   if(modal.type==='manage-subjects'){
     const deckId=state.currentDeckId;
     const d=currentDeck();
@@ -1437,12 +1701,12 @@ function modalHTML(){
     return `<div class="backdrop" onclick="if(event.target===this)closeModal()">
       <div class="sheet" role="dialog" aria-modal="true">
         <h2>Import</h2>
-        <div class="sub">Paste JSON exported from another device. Existing decks aren't overwritten — imports add alongside what's already here.</div>
+        <div class="sub">Paste JSON exported from another device, or generated by Claude. Existing decks aren't overwritten. Imports land alongside what's already here. <button class="inline-link" style="display:block;margin-top:6px" onclick="closeModal();openPromptModal()">Don't have JSON yet? Get a prompt for Claude.</button></div>
 
         <div class="field">
           <label>Exported JSON</label>
           <textarea placeholder='{"version":1,"kind":"deck",...}' oninput="mset('text',this.value)" style="min-height:160px;font-family:var(--mono);font-size:12px;line-height:1.5">${esc(modal.text||'')}</textarea>
-          ${modal.error?`<div style="margin-top:8px;color:var(--cs);font-size:13px">${esc(modal.error)}</div>`:''}
+          ${modal.error?`<div style="margin-top:10px;color:var(--cs);font-size:12.5px;font-family:var(--mono);line-height:1.55;white-space:pre-wrap;background:rgba(217,122,138,.08);border:1px solid rgba(217,122,138,.25);border-radius:9px;padding:10px 12px">${esc(modal.error)}</div>`:''}
         </div>
 
         <div class="actions">
@@ -1562,6 +1826,7 @@ function render(){
       ${deckHasUserContent(state.currentDeckId)?` · <button class="reset share" onclick="shareDeck()">share to library</button>`:''}
       · <button class="reset" onclick="openExportModal()">export</button>
       · <button class="reset" onclick="openImportModal()">import</button>
+      · <button class="reset" onclick="openPromptModal()">ask claude</button>
       ${!d.builtin?` · <button onclick="deleteDeck()">delete this deck</button>`:''}
     </div>
     ${modalHTML()}`;
