@@ -148,14 +148,17 @@ abstract final class BackupImport {
     final scenarios = data['scenarios'];
 
     final mergedJson = current.toJson();
-    final overlay = (mergedJson['overlay'] as Map?)?.cast<String, Object?>() ??
-        <String, Object?>{};
+    final overlay = Map<String, Object?>.from(
+      (mergedJson['overlay'] as Map?)?.cast<String, Object?>() ?? const {},
+    );
     final overlayCards =
-        (overlay['cards'] as Map?)?.cast<String, Object?>() ??
-            <String, Object?>{};
+        Map<String, Object?>.from(
+          (overlay['cards'] as Map?)?.cast<String, Object?>() ?? const {},
+        );
     final overlayScn =
-        (overlay['scenarios'] as Map?)?.cast<String, Object?>() ??
-            <String, Object?>{};
+        Map<String, Object?>.from(
+          (overlay['scenarios'] as Map?)?.cast<String, Object?>() ?? const {},
+        );
 
     if (cards is List) {
       final existing = (overlayCards[targetId] as List?)?.toList() ?? [];
@@ -175,8 +178,9 @@ abstract final class BackupImport {
     final progress = data['progress'];
     if (progress is Map) {
       final progressMap =
-          (mergedJson['progress'] as Map?)?.cast<String, Object?>() ??
-              <String, Object?>{};
+          Map<String, Object?>.from(
+        (mergedJson['progress'] as Map?)?.cast<String, Object?>() ?? const {},
+      );
       final existing =
           (progressMap[targetId] as Map?)?.cast<String, Object?>() ??
               <String, Object?>{};
@@ -210,19 +214,21 @@ abstract final class BackupImport {
     }
     final overlayRaw = data['overlay'];
     if (overlayRaw is Map) {
-      final mergedOverlay = (out['overlay'] as Map?)?.cast<String, Object?>() ??
-          <String, Object?>{};
-      final cards =
-          (mergedOverlay['cards'] as Map?)?.cast<String, Object?>() ??
-              <String, Object?>{};
-      final scenarios =
-          (mergedOverlay['scenarios'] as Map?)?.cast<String, Object?>() ??
-              <String, Object?>{};
+      final mergedOverlay = Map<String, Object?>.from(
+        (out['overlay'] as Map?)?.cast<String, Object?>() ?? const {},
+      );
+      final cards = Map<String, Object?>.from(
+        (mergedOverlay['cards'] as Map?)?.cast<String, Object?>() ?? const {},
+      );
+      final scenarios = Map<String, Object?>.from(
+        (mergedOverlay['scenarios'] as Map?)?.cast<String, Object?>() ??
+            const {},
+      );
       final inCards = overlayRaw['cards'];
       if (inCards is Map) {
         inCards.forEach((k, v) {
           if (k is String && v is List) {
-            cards[k] = [...((cards[k] as List?) ?? []), ...v];
+            cards[k] = [...((cards[k] as List?) ?? const []), ...v];
           }
         });
       }
@@ -232,7 +238,7 @@ abstract final class BackupImport {
           if (k is String && v is Map) {
             scenarios[k] = {
               ...((scenarios[k] as Map?)?.cast<String, Object?>() ??
-                  <String, Object?>{}),
+                  const {}),
               ...v.cast<String, Object?>(),
             };
           }
@@ -244,14 +250,14 @@ abstract final class BackupImport {
     }
     final progressRaw = data['progress'];
     if (progressRaw is Map) {
-      final outProgress =
-          (out['progress'] as Map?)?.cast<String, Object?>() ??
-              <String, Object?>{};
+      final outProgress = Map<String, Object?>.from(
+        (out['progress'] as Map?)?.cast<String, Object?>() ?? const {},
+      );
       progressRaw.forEach((deckId, prog) {
         if (deckId is String && prog is Map) {
           final existing =
               (outProgress[deckId] as Map?)?.cast<String, Object?>() ??
-                  <String, Object?>{};
+                  const {};
           outProgress[deckId] = {...existing, ...prog.cast<String, Object?>()};
         }
       });
