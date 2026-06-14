@@ -133,6 +133,11 @@
   .deck-meta{margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center}
   .deck-meta button{background:none;border:none;color:var(--cs);font:inherit;
     cursor:pointer;text-decoration:underline;padding:4px}
+  .deck-meta .share{color:var(--action)}
+  .share-banner{margin:14px 0 0;padding:11px 14px;border-radius:12px;
+    background:rgba(124,131,255,.08);border:1px solid rgba(124,131,255,.3);
+    font-size:12.5px;line-height:1.5;color:var(--text)}
+  .share-banner b{color:var(--action)}
 
   /* modal */
   .backdrop{position:fixed;inset:0;background:rgba(8,9,12,.72);backdrop-filter:blur(3px);
@@ -174,6 +179,29 @@
   .btn-save:disabled{background:var(--line);color:var(--faint)}
   .inline-link{background:none;border:none;color:var(--action);font:550 12px var(--mono);
     cursor:pointer;padding:6px 0;text-decoration:underline;margin-top:6px}
+  .subject-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .sub-chip{position:relative;display:inline-flex;align-items:center;gap:6px;
+    background:var(--surface-2);border:2px solid transparent;color:var(--text);
+    font:600 12.5px var(--sans);padding:8px 12px;border-radius:99px;cursor:pointer;
+    min-height:36px;letter-spacing:.01em;transition:.12s}
+  .sub-chip.colored{color:var(--ink)}
+  .sub-chip.on{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+  .sub-chip:disabled{opacity:.6;cursor:not-allowed}
+  .sub-chip.add-chip{background:transparent;border:1px dashed var(--line);color:var(--muted);
+    font-family:var(--mono);font-size:11.5px;font-weight:550}
+  .sub-chip.add-chip:hover{border-color:var(--action);color:var(--action)}
+  .sub-chip.add-chip.on{border-color:var(--action);color:var(--action);background:rgba(124,131,255,.08)}
+  .sub-x{background:rgba(0,0,0,.4);border:none;color:#fff;width:20px;height:20px;
+    border-radius:50%;font:600 13px/1 var(--sans);cursor:pointer;display:inline-flex;
+    align-items:center;justify-content:center;padding:0}
+  .sub-x:hover{background:rgba(0,0,0,.6)}
+  .sub-x:disabled{background:rgba(0,0,0,.15);cursor:not-allowed;color:rgba(255,255,255,.4)}
+  .subject-editor{margin-top:14px;padding:14px;border-radius:12px;background:var(--ink);
+    border:1px solid var(--action)}
+  .subject-editor .field{margin-top:10px}
+  .subject-editor .field:first-child{margin-top:0}
+  .editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .editor-actions .btn{padding:11px;min-height:42px;font-size:13.5px}
   .danger-zone{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line)}
   .danger-zone .btn-danger{background:rgba(217,122,138,.12);color:var(--cs);border-color:transparent;
     width:100%;padding:14px;font-size:14px;min-height:48px}
@@ -286,6 +314,8 @@ const PRESET_COLORS=['#7c83ff','#5fb89a','#e0a458','#d97a8a','#9d7cff','#5fb5e0'
 
 const STORE_KEY='drill-decks-v2';
 const LEGACY_KEY='cca-f-progress-v1';
+const REPO='liitx/claude-cert-practice-exam-cards';
+const SHARED_URL='./decks.json';
 
 let state={currentDeckId:'cca-f',userDecks:[],overlay:{cards:{},scenarios:{}},progress:{}};
 let filter='miss';
@@ -313,6 +343,20 @@ function load(){
   }catch(e){}
   if(!getDeckBase(state.currentDeckId))state.currentDeckId='cca-f';
   render();
+  loadSharedDecks();
+}
+
+async function loadSharedDecks(){
+  try{
+    const res=await fetch(SHARED_URL,{cache:'no-cache'});
+    if(!res.ok)return;
+    const data=await res.json();
+    if(!data||!Array.isArray(data.decks))return;
+    BUILTIN_DECKS.length=0;
+    data.decks.forEach(d=>BUILTIN_DECKS.push({...d,builtin:true,shared:true}));
+    if(!getDeckBase(state.currentDeckId))state.currentDeckId=BUILTIN_DECKS[0]?.id||'cca-f';
+    render();
+  }catch(e){/* offline — keep embedded fallback */}
 }
 
 function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(state));}catch(e){}}
@@ -413,9 +457,10 @@ function openDeckModal(){
   render();
 }
 function closeModal(){modal=null;render();}
-function mset(k,v){modal[k]=v;refreshSaveBtn();}
+function mset(k,v){modal[k]=v;refreshUI();}
 function msetR(k,v){modal[k]=v;render();}
-function mnest(p,k,v){modal[p]=modal[p]||{};modal[p][k]=v;refreshSaveBtn();}
+function mnest(p,k,v){modal[p]=modal[p]||{};modal[p][k]=v;refreshUI();}
+function refreshUI(){refreshSaveBtn();refreshSubjectEditorBtn();}
 function refreshSaveBtn(){
   if(!modal)return;
   const btn=document.querySelector('.btn-save');
@@ -428,6 +473,115 @@ function refreshSaveBtn(){
     valid=!!(modal.name.trim()&&modal.firstLabel.trim());
   }
   btn.disabled=!valid;
+}
+function refreshSubjectEditorBtn(){
+  if(!modal)return;
+  const btn=document.querySelector('.sub-edit-save');
+  if(!btn)return;
+  btn.disabled=!(modal.editLabel&&modal.editLabel.trim());
+}
+
+function pickSubject(key){
+  modal.subject=key;
+  modal.newSubject=null;
+  modal.editingSubjectKey=null;
+  render();
+}
+function toggleSubjectEdit(){
+  modal.editingSubjects=!modal.editingSubjects;
+  modal.editingSubjectKey=null;
+  render();
+}
+function openSubjectEditor(key){
+  const scenarios=deckScenarios(state.currentDeckId);
+  const s=scenarios[key];if(!s)return;
+  modal.editingSubjectKey=key;
+  modal.editLabel=s.label;
+  modal.editColor=s.color;
+  modal.newSubject=null;
+  render();
+}
+function closeSubjectEditor(){modal.editingSubjectKey=null;render();}
+function pickEditColor(c){modal.editColor=c;render();}
+function saveSubjectEdit(){
+  const key=modal.editingSubjectKey;
+  if(!key||!modal.editLabel.trim())return;
+  const deckId=state.currentDeckId;
+  const entry={label:modal.editLabel.trim(),color:modal.editColor};
+  const userDeck=state.userDecks.find(d=>d.id===deckId);
+  if(userDeck&&userDeck.scenarios[key]){
+    userDeck.scenarios[key]=entry;
+  }else{
+    state.overlay.scenarios[deckId]=state.overlay.scenarios[deckId]||{};
+    state.overlay.scenarios[deckId][key]=entry;
+  }
+  save();
+  modal.editingSubjectKey=null;
+  render();
+}
+function removeSubject(key){
+  const deckId=state.currentDeckId;
+  const using=deckCards(deckId).filter(c=>c.scn===key).length;
+  if(using>0){alert(using+' card'+(using>1?'s':'')+' use this subject. Move or delete '+(using>1?'them':'it')+' first.');return;}
+  if(Object.keys(deckScenarios(deckId)).length<=1){alert('Keep at least one subject in the deck.');return;}
+  if(!confirm('Delete this subject?'))return;
+  const userDeck=state.userDecks.find(d=>d.id===deckId);
+  if(userDeck&&userDeck.scenarios[key])delete userDeck.scenarios[key];
+  if((state.overlay.scenarios[deckId]||{})[key])delete state.overlay.scenarios[deckId][key];
+  if(modal.subject===key)modal.subject=Object.keys(deckScenarios(deckId))[0]||'';
+  save();render();
+}
+function isUserSubject(deckId,key){
+  const userDeck=state.userDecks.find(d=>d.id===deckId);
+  if(userDeck&&userDeck.scenarios[key])return true;
+  if((state.overlay.scenarios[deckId]||{})[key])return true;
+  return false;
+}
+
+function deckHasUserContent(deckId){
+  if(state.userDecks.some(d=>d.id===deckId))return true;
+  const addedCards=(state.overlay.cards||{})[deckId]||[];
+  const addedScn=(state.overlay.scenarios||{})[deckId]||{};
+  return addedCards.length>0||Object.keys(addedScn).length>0;
+}
+
+function shareDeck(){
+  const d=currentDeck();if(!d)return;
+  const deckId=state.currentDeckId;
+  const userDeck=state.userDecks.find(x=>x.id===deckId);
+  let payload,title;
+  if(userDeck){
+    payload={type:'new-deck',deck:{
+      name:userDeck.name,
+      scenarios:deckScenarios(deckId),
+      cards:deckCards(deckId)
+    }};
+    title='Deck submission: '+userDeck.name;
+  }else{
+    const cards=(state.overlay.cards||{})[deckId]||[];
+    const scenarios=(state.overlay.scenarios||{})[deckId]||{};
+    if(!cards.length&&!Object.keys(scenarios).length){
+      alert('No cards or subjects you\'ve added to this deck yet. Add some first.');
+      return;
+    }
+    payload={type:'cards-for-deck',targetDeckId:deckId,cards,scenarios};
+    title='Cards for '+d.name+': '+cards.length+' new';
+  }
+  const json=JSON.stringify(payload,null,2);
+  const body='<!-- Submission via the app. Maintainer: review and merge into decks.json. -->\n\n```json\n'+json+'\n```';
+  const base='https://github.com/'+REPO+'/issues/new?labels=submission&title='+encodeURIComponent(title);
+  const full=base+'&body='+encodeURIComponent(body);
+  if(full.length>7500){
+    const fallback=()=>{
+      alert('Deck is large. The JSON has been copied to your clipboard — paste it into the new issue that opens.');
+      window.open(base,'_blank','noopener');
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(body).then(fallback,fallback);
+    }else fallback();
+  }else{
+    window.open(full,'_blank','noopener');
+  }
 }
 function toggleAddSubject(){
   if(modal.newSubject)modal.newSubject=null;
@@ -502,22 +656,41 @@ function swatchRow(selected,onPick){
 function modalHTML(){
   if(!modal)return '';
   if(modal.type==='card'){
-    const scenarios=deckScenarios(state.currentDeckId);
-    const opts=Object.entries(scenarios).map(([k,v])=>
-      `<option value="${esc(k)}" ${modal.subject===k?'selected':''}>${esc(v.label)}</option>`).join('');
+    const deckId=state.currentDeckId;
+    const scenarios=deckScenarios(deckId);
+    const scenarioKeys=Object.keys(scenarios);
     const addingSubject=!!modal.newSubject;
+    const editing=!!modal.editingSubjects;
+    const editingKey=modal.editingSubjectKey;
     const valid=modal.q.trim()&&modal.a.trim()&&(modal.subject||(addingSubject&&modal.newSubject.label.trim()));
+    const cardsByScn=deckCards(deckId).reduce((m,c)=>{m[c.scn]=(m[c.scn]||0)+1;return m;},{});
+    const chipsHTML=scenarioKeys.map(k=>{
+      const v=scenarios[k];
+      const isSel=modal.subject===k&&!addingSubject;
+      const inUse=(cardsByScn[k]||0)>0;
+      const isLast=scenarioKeys.length<=1;
+      const canDelete=!inUse&&!isLast;
+      const onClick=editing?`openSubjectEditor('${esc(k)}')`:`pickSubject('${esc(k)}')`;
+      const delTitle=isLast?'keep at least one subject':inUse?(cardsByScn[k]+' card'+(cardsByScn[k]>1?'s':'')+' use this'):'delete';
+      return `<button type="button" class="sub-chip colored ${isSel?'on':''}" style="background:${v.color}" onclick="${onClick}">
+        ${esc(v.label)}
+        ${editing?`<button type="button" class="sub-x" ${canDelete?'':'disabled'} onclick="event.stopPropagation();${canDelete?`removeSubject('${esc(k)}')`:''}" title="${esc(delTitle)}">×</button>`:''}
+      </button>`;
+    }).join('');
+
     return `<div class="backdrop" onclick="if(event.target===this)closeModal()">
       <div class="sheet" role="dialog" aria-modal="true">
         <h2>New card</h2>
         <div class="sub">Adding to <b>${esc(currentDeck().name)}</b></div>
 
-        ${Object.keys(scenarios).length?`
         <div class="field">
           <label>Subject</label>
-          <select onchange="mset('subject',this.value)" ${addingSubject?'disabled':''}>${opts}</select>
-          <button class="inline-link" type="button" onclick="toggleAddSubject()">${addingSubject?'use existing subject':'+ add new subject'}</button>
-        </div>`:''}
+          <div class="subject-chips">
+            ${chipsHTML}
+            <button type="button" class="sub-chip add-chip ${addingSubject?'on':''}" onclick="toggleAddSubject()">${addingSubject?'cancel':'+ new'}</button>
+          </div>
+          ${scenarioKeys.length?`<button class="inline-link" type="button" onclick="toggleSubjectEdit()">${editing?'done editing':'edit subjects'}</button>`:''}
+        </div>
 
         ${addingSubject?`
         <div class="field">
@@ -525,7 +698,22 @@ function modalHTML(){
           <input type="text" placeholder="e.g. Tool Use" value="${esc(modal.newSubject.label)}" oninput="mnest('newSubject','label',this.value)" autofocus>
           <label style="margin-top:12px">Subject color</label>
           ${swatchRow(modal.newSubject.color,'pickNewSubjectColor')}
-          ${Object.keys(scenarios).length?'<button class="inline-link" type="button" onclick="toggleAddSubject()">cancel</button>':''}
+        </div>`:''}
+
+        ${editingKey?`
+        <div class="subject-editor">
+          <div class="field">
+            <label>Edit subject name</label>
+            <input type="text" value="${esc(modal.editLabel)}" oninput="mset('editLabel',this.value)" autofocus>
+          </div>
+          <div class="field">
+            <label>Color</label>
+            ${swatchRow(modal.editColor,'pickEditColor')}
+          </div>
+          <div class="editor-actions">
+            <button class="btn btn-cancel" onclick="closeSubjectEditor()">Cancel</button>
+            <button class="btn btn-save sub-edit-save" onclick="saveSubjectEdit()" ${modal.editLabel&&modal.editLabel.trim()?'':'disabled'}>Save</button>
+          </div>
         </div>`:''}
 
         <div class="field">
@@ -683,6 +871,7 @@ function render(){
     ${body}
     <div class="deck-meta">
       <button class="reset" onclick="resetAll()">reset progress for this deck</button>
+      ${deckHasUserContent(state.currentDeckId)?` · <button class="reset share" onclick="shareDeck()">share to library</button>`:''}
       ${!d.builtin?` · <button onclick="deleteDeck()">delete this deck</button>`:''}
     </div>
     ${modalHTML()}`;

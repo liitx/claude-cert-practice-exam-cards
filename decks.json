@@ -1,0 +1,575 @@
+{
+  "version": 1,
+  "updated": "2026-06-14",
+  "decks": [
+    {
+      "id": "cca-f",
+      "name": "CCA-F Drill Deck",
+      "scenarios": {
+        "CI": {
+          "label": "Claude Code · CI",
+          "color": "#7c83ff"
+        },
+        "MA": {
+          "label": "Multi-Agent",
+          "color": "#5fb89a"
+        },
+        "CG": {
+          "label": "Code Generation",
+          "color": "#e0a458"
+        },
+        "CS": {
+          "label": "Customer Support",
+          "color": "#d97a8a"
+        }
+      },
+      "cards": [
+        {
+          "id": "ci1",
+          "scn": "CI",
+          "topic": "Batch Processing",
+          "miss": true,
+          "pick": "D",
+          "q": "Reduce API cost: you have latency-sensitive pre-merge checks AND overnight tech-debt reports. How do you split them?",
+          "a": "Batch for the overnight reports only; keep real-time for pre-merge checks.",
+          "why": "Match each API to its latency need — the Batches API (up to 24hr) suits reports, not blocking checks devs are waiting on."
+        },
+        {
+          "id": "ci2",
+          "scn": "CI",
+          "topic": "Batch Processing",
+          "miss": false,
+          "q": "Of your CI review modes, which is the best candidate to move to the Batches API?",
+          "a": "Deep analysis only.",
+          "why": "It already runs overnight, tolerates latency, and polls for completion — a perfect match for the async, poll-based batch model (50% savings)."
+        },
+        {
+          "id": "ci3",
+          "scn": "CI",
+          "topic": "Structured Output",
+          "miss": false,
+          "q": "CI runs the Claude Code CLI in --print mode; you need reliable structured findings posted as inline PR comments.",
+          "a": "Use <code>--output-format json</code> + <code>--json-schema</code>, then parse and post via the GitHub API.",
+          "why": "Native CLI enforcement guarantees well-formed JSON with the required fields — more reliable than prompt-only formatting."
+        },
+        {
+          "id": "ci4",
+          "scn": "CI",
+          "topic": "Batch Processing",
+          "miss": true,
+          "pick": "A",
+          "q": "Three tasks: PR style checks, weekly security audits, nightly test generation. Which go to the Batches API?",
+          "a": "Sync for PR style checks; Batches API for the weekly audits + nightly tests.",
+          "why": "PR checks block developers (need immediate sync); audits and nightly tests are scheduled and tolerate the 24hr window. Not all three on batch."
+        },
+        {
+          "id": "ci5",
+          "scn": "CI",
+          "topic": "Task Decomposition",
+          "miss": true,
+          "pick": "C",
+          "q": "A PR touches 14 files; a single review pass gives uneven attention. How do you get consistent depth + catch cross-file issues?",
+          "a": "Split into focused per-file passes for local issues + one separate integration pass for cross-file data flow.",
+          "why": "Addresses the root cause (attention dilution). Consensus voting across 3 full runs suppresses real bugs that only appear intermittently."
+        },
+        {
+          "id": "ci6",
+          "scn": "CI",
+          "topic": "False Positive Reduction",
+          "miss": true,
+          "pick": "D",
+          "q": "~15 findings/PR; devs spend too long investigating each. Stakeholders rejected filtering. What helps?",
+          "a": "Require Claude to include reasoning + confidence inline with each finding.",
+          "why": "Faster triage, nothing hidden. Auto-suppressing FP-signature findings is still filtering — which was explicitly rejected."
+        },
+        {
+          "id": "ci7",
+          "scn": "CI",
+          "topic": "Few-Shot Prompting",
+          "miss": false,
+          "q": "Reviews find valid issues but the output format is inconsistent. Most reliable fix?",
+          "a": "Add 3-4 few-shot examples showing the exact format (issue, location, specific fix).",
+          "why": "Concrete format examples beat abstract instructions for consistency."
+        },
+        {
+          "id": "ci8",
+          "scn": "CI",
+          "topic": "False Positive Reduction",
+          "miss": true,
+          "pick": "A",
+          "q": "~50% FP rate is eroding dev trust NOW. Improving prompts will take weeks. What do you do in the meantime?",
+          "a": "Temporarily disable the high-FP categories (style, naming, docs); run only high-precision ones while you fix prompts.",
+          "why": "Stops trust erosion immediately. Keeping everything on for weeks lets devs keep dismissing all findings."
+        },
+        {
+          "id": "ci9",
+          "scn": "CI",
+          "topic": "CI/CD Integration",
+          "miss": true,
+          "pick": "D",
+          "q": "Your pipeline runs <code>claude \"Analyze...\"</code> and the job hangs waiting for input. Fix?",
+          "a": "Add the <code>-p</code> (<code>--print</code>) flag.",
+          "why": "Runs non-interactively, outputs to stdout, exits. <code>CLAUDE_HEADLESS=true</code> is not a real feature."
+        },
+        {
+          "id": "ci10",
+          "scn": "CI",
+          "topic": "Batch Processing",
+          "miss": true,
+          "pick": "D",
+          "q": "Your review works iteratively (analyze file → call tool → continue). Why can't the Batches API run this?",
+          "a": "The async fire-and-forget model can't execute a tool mid-request and return results for Claude to continue.",
+          "why": "It breaks iterative tool-calling. The limitation is architectural — not just the 24hr latency."
+        },
+        {
+          "id": "ci11",
+          "scn": "CI",
+          "topic": "Context",
+          "miss": false,
+          "q": "Your review suggests test cases but duplicates existing coverage. Fix?",
+          "a": "Include the existing test file in context so Claude sees what's already covered.",
+          "why": "Gives Claude the information to avoid redundant suggestions."
+        },
+        {
+          "id": "ci12",
+          "scn": "CI",
+          "topic": "Classification Consistency",
+          "miss": false,
+          "q": "Severity ratings are inconsistent for similar issues. How do you stabilize them?",
+          "a": "Put explicit severity criteria in the prompt with concrete code examples for each level.",
+          "why": "Removes ambiguity about what each level means; gives clear reference points."
+        },
+        {
+          "id": "ci13",
+          "scn": "CI",
+          "topic": "Prompt Specificity",
+          "miss": true,
+          "pick": "C",
+          "q": "Review flags comments/docstrings unreliably. The instruction is vague. Best fix that generalizes?",
+          "a": "Specify the explicit criterion: flag a comment only when its claimed behavior contradicts the actual code.",
+          "why": "Defining the criterion beats few-shot examples, which won't generalize to novel contradiction types."
+        },
+        {
+          "id": "ci14",
+          "scn": "CI",
+          "topic": "CI/CD Integration",
+          "miss": true,
+          "pick": "D",
+          "q": "After a re-push, the review re-reports issues already fixed. Stop redundant comments?",
+          "a": "Include prior review findings in context; instruct Claude to report only new/still-unaddressed issues.",
+          "why": "A post-processing match-filter is brittle — LLM comment wording varies across runs."
+        },
+        {
+          "id": "ci15",
+          "scn": "CI",
+          "topic": "Multi-Instance Verification",
+          "miss": true,
+          "pick": "C",
+          "q": "Claude generated code, considered the edge cases, concluded it was correct — but it's wrong. More thinking didn't help. What does?",
+          "a": "Have a second, independent Claude review the changes without seeing the generator's reasoning.",
+          "why": "Eliminates confirmation bias — a fresh perspective, like human peer review. More deliberation can't un-rationalize a decision already made."
+        },
+        {
+          "id": "ma1",
+          "scn": "MA",
+          "topic": "Orchestration",
+          "miss": false,
+          "q": "Research output missed whole domains (music, writing, film); the subagents all executed their tasks fine. Root cause?",
+          "a": "The coordinator's task decomposition was too narrow.",
+          "why": "It only assigned visual-arts subtasks. The decomposition — not the subagents — caused the missing coverage."
+        },
+        {
+          "id": "ma2",
+          "scn": "MA",
+          "topic": "Error Propagation",
+          "miss": true,
+          "pick": "A",
+          "q": "Web search returns results for only 3 of 5 source categories. How should synthesis handle it?",
+          "a": "Structure the synthesis output with coverage annotations: which findings are well-supported vs which areas have gaps.",
+          "why": "Graceful degradation with transparency. Erroring out throws away all the work that did succeed."
+        },
+        {
+          "id": "ma3",
+          "scn": "MA",
+          "topic": "Tool Distribution",
+          "miss": true,
+          "pick": "A",
+          "q": "The doc-analysis agent has a general <code>fetch_url</code> tool and keeps doing web searches with it. Fix?",
+          "a": "Replace <code>fetch_url</code> with a scoped <code>load_document</code> tool that validates URLs point to document formats.",
+          "why": "Constrain capability at the interface (least privilege) so the wrong behavior is impossible — don't remove the legit ability."
+        },
+        {
+          "id": "ma4",
+          "scn": "MA",
+          "topic": "Orchestration",
+          "miss": false,
+          "q": "Web search + doc analysis both finished. What happens next in the orchestrator-workers pattern?",
+          "a": "The coordinator passes both sets of findings to the synthesis agent for unified integration.",
+          "why": "The coordinator maintains centralized control: collect from subagents, route to the next component."
+        },
+        {
+          "id": "ma5",
+          "scn": "MA",
+          "topic": "Error Propagation",
+          "miss": false,
+          "q": "Doc-analysis subagent hits a corrupted PDF it can't parse. Best response?",
+          "a": "Return the error with context to the coordinator and let it decide.",
+          "why": "Keeps the failure visible; the coordinator has the context to skip, retry differently, or notify the user."
+        },
+        {
+          "id": "ma6",
+          "scn": "MA",
+          "topic": "Orchestration",
+          "miss": false,
+          "q": "Combined upstream output is 85K tokens of verbose content, blowing up synthesis cost. Fix at the source?",
+          "a": "Modify upstream agents to return structured data (key facts, citations, relevance scores) instead of verbose content.",
+          "why": "Cuts token volume where it's generated, preserving the essential info for synthesis."
+        },
+        {
+          "id": "ma7",
+          "scn": "MA",
+          "topic": "Tool Distribution",
+          "miss": true,
+          "pick": "A",
+          "q": "Synthesis agent constantly round-trips to web search for simple fact checks (85% are simple). Reduce latency how?",
+          "a": "Give synthesis a scoped <code>verify_fact</code> tool for simple lookups; keep delegating the 15% complex ones via the coordinator.",
+          "why": "Handles most lookups directly (least privilege) while preserving the delegation path for hard cases."
+        },
+        {
+          "id": "ma8",
+          "scn": "MA",
+          "topic": "Error Propagation",
+          "miss": true,
+          "pick": "D",
+          "q": "Doc-analysis subagent frequently hits transient PDF failures. How should it handle errors?",
+          "a": "Implement local recovery for transient failures; only propagate the truly unresolvable ones — with what was attempted + partial results.",
+          "why": "Handle errors at the lowest capable level. Masking errors as success hides real data-quality problems."
+        },
+        {
+          "id": "ma9",
+          "scn": "MA",
+          "topic": "Orchestration",
+          "miss": false,
+          "q": "Why route all subagent communication through the coordinator (hub-and-spoke) vs agent-to-agent?",
+          "a": "The coordinator can observe all interactions, handle errors consistently, and control what info each subagent receives.",
+          "why": "These are the core advantages of centralized hub-and-spoke communication."
+        },
+        {
+          "id": "ma10",
+          "scn": "MA",
+          "topic": "Error Propagation",
+          "miss": false,
+          "q": "Web search subagent times out on a complex topic. What should it return?",
+          "a": "Structured error context: failure type, attempted query, partial results, and potential alternative approaches.",
+          "why": "Gives the coordinator everything it needs to make an intelligent recovery decision."
+        },
+        {
+          "id": "ma11",
+          "scn": "MA",
+          "topic": "Tool Distribution",
+          "miss": true,
+          "pick": "D",
+          "q": "Coordinator mis-routes requests — the web-search and doc-analysis tools have semantically overlapping descriptions. Fix?",
+          "a": "Rename the web search tool (e.g. <code>extract_web_results</code>) and update its description so each tool's purpose is unambiguous.",
+          "why": "Fixes the root cause (semantic overlap). Few-shot routing examples just patch the symptom."
+        },
+        {
+          "id": "ma12",
+          "scn": "MA",
+          "topic": "Error Propagation",
+          "miss": true,
+          "pick": "B",
+          "q": "Web search: one source times out, another returns \"0 results.\" Treat them the same?",
+          "a": "No — distinguish access failures (timeout → retry) from valid empty results (\"0 results\" = a successful query).",
+          "why": "They're semantically distinct outcomes needing different responses. Retrying a definitively-empty source wastes resources."
+        },
+        {
+          "id": "ma13",
+          "scn": "MA",
+          "topic": "Orchestration",
+          "miss": true,
+          "pick": "C",
+          "q": "Doc-analysis agent finds two credible sources with directly conflicting figures. What should it do?",
+          "a": "Complete the analysis with both figures included, annotate the conflict with source attribution, and let the coordinator reconcile.",
+          "why": "Picking a winner oversteps its role — it lacks the broader context. Don't bury a real discrepancy in a footnote."
+        },
+        {
+          "id": "ma14",
+          "scn": "MA",
+          "topic": "Long Context Position",
+          "miss": true,
+          "pick": "D",
+          "q": "Synthesis quality is inconsistent; key info gets lost in large aggregated input (lost-in-the-middle). Fix?",
+          "a": "Put a key-findings summary at the start (primacy) and add explicit section headers to aid navigation.",
+          "why": "Leverages the primacy effect and helps the model attend to middle content. Aggressive summarizing risks worse info loss."
+        },
+        {
+          "id": "cg1",
+          "scn": "CG",
+          "topic": "Path-Specific Rules",
+          "miss": true,
+          "pick": "D",
+          "q": "Different conventions for React components vs API routes vs tests, applied automatically by file path. What mechanism?",
+          "a": "Rule files in <code>.claude/rules/</code> with YAML frontmatter + glob patterns (e.g. <code>**/*.test.tsx</code>).",
+          "why": "Globs apply conventions deterministically by path. Skills need manual invocation — wrong fit for automatic, path-based rules."
+        },
+        {
+          "id": "cg2",
+          "scn": "CG",
+          "topic": "Plan Mode",
+          "miss": false,
+          "q": "You're restructuring a monolith into microservices across dozens of files. Best first move?",
+          "a": "Enter plan mode — explore the codebase, understand dependencies, design the approach before changing anything.",
+          "why": "Safe exploration + informed decisions about service boundaries before costly changes."
+        },
+        {
+          "id": "cg3",
+          "scn": "CG",
+          "topic": "Slash Commands",
+          "miss": true,
+          "pick": "B",
+          "q": "You want a custom <code>/review</code> slash command, version-controlled for the whole team. Where does it go?",
+          "a": "In the <code>.claude/commands/</code> directory in the project repo.",
+          "why": "Version-controlled and auto-available to everyone who clones. CLAUDE.md is for instructions/context, not command definitions."
+        },
+        {
+          "id": "cg4",
+          "scn": "CG",
+          "topic": "CLAUDE.md Hierarchy",
+          "miss": false,
+          "q": "A guideline works for original devs but new hires don't get it. Likely cause + fix?",
+          "a": "It lives in the original devs' user-level <code>~/.claude/CLAUDE.md</code> — move it to the project's <code>.claude/CLAUDE.md</code>.",
+          "why": "Project-level config reaches all current and future team members automatically."
+        },
+        {
+          "id": "cg5",
+          "scn": "CG",
+          "topic": "MCP Integration",
+          "miss": true,
+          "pick": "C",
+          "q": "Add a GitHub MCP server for the team, with auth, without committing secrets. How?",
+          "a": "Add it to a project-scoped <code>.mcp.json</code> using env var expansion (<code>${GITHUB_TOKEN}</code>); document the var in the README.",
+          "why": "One version-controlled source of truth; each dev supplies their own credential. A custom token-proxy wrapper is over-engineered."
+        },
+        {
+          "id": "cg6",
+          "scn": "CG",
+          "topic": "Context Isolation",
+          "miss": true,
+          "pick": "B",
+          "q": "An <code>/analyze-codebase</code> skill produces huge output that pollutes the main context. Fix?",
+          "a": "Add <code>context: fork</code> to the skill's frontmatter — runs it in an isolated sub-agent context.",
+          "why": "Verbose output stays out of the main session. Splitting into 3 skills produces the same total output."
+        },
+        {
+          "id": "cg7",
+          "scn": "CG",
+          "topic": "Slash Commands",
+          "miss": false,
+          "q": "A <code>/migration</code> skill needs: show expected params, isolate execution, restrict to file-write only. Which 3 features?",
+          "a": "<code>argument-hint</code> + <code>context: fork</code> + <code>allowed-tools</code> (restricted to file writes).",
+          "why": "Each maps to one requirement: param hints on autocomplete, isolated execution, and locked-down tool access."
+        },
+        {
+          "id": "cg8",
+          "scn": "CG",
+          "topic": "Slash Commands",
+          "miss": true,
+          "pick": "C",
+          "q": "2-3 exemplar endpoint implementations help generation, but you don't want them loaded during unrelated tasks. How?",
+          "a": "Create a skill referencing the exemplars + pattern-following instructions, invoked on-demand via slash command.",
+          "why": "Loads the context only when generating endpoints — not during bug fixes or reviews. Manual copy-paste is tedious and error-prone."
+        },
+        {
+          "id": "cg9",
+          "scn": "CG",
+          "topic": "Context Isolation",
+          "miss": true,
+          "pick": "C",
+          "q": "An <code>/explore-alternatives</code> skill's brainstorming leaks into later implementation work. Fix?",
+          "a": "Add <code>context: fork</code> to the skill's frontmatter so it runs isolated.",
+          "why": "Keeps abandoned approaches out of the main history. Moving it to <code>~/.claude/skills/</code> only changes discoverability, not isolation."
+        },
+        {
+          "id": "cg10",
+          "scn": "CG",
+          "topic": "Modular Org",
+          "miss": false,
+          "q": "CLAUDE.md is 500+ lines mixing TS conventions, testing, API rules. How to organize?",
+          "a": "Split into separate topic files in <code>.claude/rules/</code> (e.g. <code>testing.md</code>, <code>api-conventions.md</code>).",
+          "why": "Organizes large instruction sets into focused, maintainable modules."
+        },
+        {
+          "id": "cg11",
+          "scn": "CG",
+          "topic": "Plan Mode",
+          "miss": false,
+          "q": "Adding Slack notifications — multiple valid approaches (webhooks/bot tokens/Slack Apps), requirements ambiguous. First move?",
+          "a": "Enter plan mode to explore the options + trade-offs, then present a recommendation before implementing.",
+          "why": "Multiple valid architectures + ambiguity = explore and align before committing to a path."
+        },
+        {
+          "id": "cg12",
+          "scn": "CG",
+          "topic": "Slash Commands",
+          "miss": false,
+          "q": "You want a personal version of the team's project <code>/commit</code> skill. What's the catch?",
+          "a": "Project skills take precedence over personal skills of the same name — give yours a different name (e.g. <code>/my-commit</code>).",
+          "why": "A different name in <code>~/.claude/skills/</code> keeps your version accessible alongside the team's."
+        },
+        {
+          "id": "cg13",
+          "scn": "CG",
+          "topic": "Skills vs CLAUDE.md",
+          "miss": false,
+          "q": "400+ line CLAUDE.md mixing universal standards with task-specific workflows. How to split?",
+          "a": "Keep universal standards in CLAUDE.md (always loaded); move task workflows into Skills with trigger keywords.",
+          "why": "CLAUDE.md loads every conversation (always-on); Skills invoke on-demand when Claude detects relevant keywords."
+        },
+        {
+          "id": "cg14",
+          "scn": "CG",
+          "topic": "Subagent Delegation",
+          "miss": true,
+          "pick": "C",
+          "q": "Adding error handling across 120 files: Phase 1 discovery is verbose, Phases 2-3 need retained context. How?",
+          "a": "Use the Explore subagent for Phase 1 to isolate the verbose output and return a summary; continue Phases 2-3 in the main conversation.",
+          "why": "Preserves the main context window for the design and implementation phases where retained context matters most."
+        },
+        {
+          "id": "cg15",
+          "scn": "CG",
+          "topic": "Iterative Refinement",
+          "miss": true,
+          "pick": "C",
+          "q": "Claude keeps misunderstanding a data transformation's field nesting + timestamp format. Best fix?",
+          "a": "Provide 2-3 concrete input→output examples showing the expected transformation.",
+          "why": "Eliminates prose ambiguity by showing exactly what's expected. A JSON schema only verifies structure — it doesn't teach the logic."
+        },
+        {
+          "id": "cs1",
+          "scn": "CS",
+          "topic": "Escalation Decisions",
+          "miss": false,
+          "q": "Agent hits 55% first-contact resolution (target 80%); logs show unclear escalate-vs-resolve boundaries. First fix?",
+          "a": "Add explicit escalation criteria to the system prompt with few-shot examples of when to escalate vs resolve.",
+          "why": "Addresses the root cause (unclear decision boundaries) — proportionate, no new infrastructure."
+        },
+        {
+          "id": "cs2",
+          "scn": "CS",
+          "topic": "Parallel Tool Execution",
+          "miss": true,
+          "pick": "B",
+          "q": "Agent averages 4+ API round-trips per resolution (sequential tool calls). Minimal-change fix?",
+          "a": "Prompt Claude to batch related tool requests in a single turn and return all results together before the next API call.",
+          "why": "Leverages Claude's native multi-tool ability with minimal change. Composite tools add maintenance burden for every combination."
+        },
+        {
+          "id": "cs3",
+          "scn": "CS",
+          "topic": "Workflow Orchestration",
+          "miss": false,
+          "q": "A multi-concern request causes redundant data fetching + many tool calls. Best approach?",
+          "a": "Decompose into distinct concerns, investigate each in parallel using shared customer context, then synthesize.",
+          "why": "Reuses context across concerns (no redundant fetches) and parallelizes the investigations."
+        },
+        {
+          "id": "cs4",
+          "scn": "CS",
+          "topic": "Self-Evaluation",
+          "miss": false,
+          "q": "The agent's explanations for complex cases are inconsistently complete. Fix without human review?",
+          "a": "Add a self-critique step (evaluator-optimizer): evaluate the draft for completeness before sending.",
+          "why": "Catches case-specific gaps (policy context, timelines, next steps) that vary across scenarios — no human in the loop."
+        },
+        {
+          "id": "cs5",
+          "scn": "CS",
+          "topic": "Context Management",
+          "miss": false,
+          "q": "Progressive summarization at 70% context loses precise details (amounts, dates, order #s). Fix?",
+          "a": "Extract transactional facts into a persistent \"case facts\" block included in every prompt, outside the summarized history.",
+          "why": "Summarization is lossy for precise details; a structured facts block keeps them reliably available regardless of turn count."
+        },
+        {
+          "id": "cs6",
+          "scn": "CS",
+          "topic": "Tool Interface Design",
+          "miss": true,
+          "pick": "B",
+          "q": "Agent calls <code>get_customer</code> for order questions — picks the wrong tool. Low-effort, high-leverage first step?",
+          "a": "Expand each tool's description: input formats, example queries, edge cases, and boundaries (when to use it vs similar tools).",
+          "why": "Descriptions are the LLM's primary tool-selection input. A keyword routing layer is over-engineered and brittle."
+        },
+        {
+          "id": "cs7",
+          "scn": "CS",
+          "topic": "Tool Selection",
+          "miss": true,
+          "pick": "C",
+          "q": "Agent frequently picks <code>get_customer</code> for order lookups. First diagnostic step?",
+          "a": "Review the tool descriptions to ensure they clearly distinguish each tool's purpose.",
+          "why": "Descriptions guide selection — check them before building a separate router/classifier that bypasses native selection."
+        },
+        {
+          "id": "cs8",
+          "scn": "CS",
+          "topic": "Tool Selection",
+          "miss": true,
+          "pick": "D",
+          "q": "Single-concern requests: 94% accuracy. Multi-concern messages fail. Fix?",
+          "a": "Add few-shot examples demonstrating correct reasoning + tool sequence for multi-concern requests.",
+          "why": "It already handles single concerns well — it just needs the multi-concern pattern. A separate decompose model-call is over-engineered."
+        },
+        {
+          "id": "cs9",
+          "scn": "CS",
+          "topic": "Tool Selection",
+          "miss": true,
+          "pick": "B",
+          "q": "When users say \"account,\" correct tool selection drops to 78% (vs 93% without the word). Tool descriptions are clean. Root cause?",
+          "a": "The system prompt contains keyword-sensitive instructions steering behavior on terms like \"account.\"",
+          "why": "The systematic keyword-triggered pattern points to prompt-level routing logic, not a training-data gap. Fine-tuning is disproportionate."
+        },
+        {
+          "id": "cs10",
+          "scn": "CS",
+          "topic": "Escalation Decisions",
+          "miss": false,
+          "q": "Customer wants a competitor price match; policy covers own-site drops within 14 days but is silent on competitors. Agent should?",
+          "a": "Escalate for policy interpretation.",
+          "why": "A genuine policy gap — the agent can't fabricate policy and needs human judgment to interpret/extend the rules."
+        },
+        {
+          "id": "cs11",
+          "scn": "CS",
+          "topic": "Ambiguous Result Handling",
+          "miss": false,
+          "q": "<code>get_customer</code> returns multiple matches when searching by name (15% wrong-customer rate). Fix?",
+          "a": "Instruct Claude to ask for an additional identifier (email, phone, order #) when there are multiple matches, before acting.",
+          "why": "The user has definitive knowledge of their own identity — one extra turn eliminates the wrong-customer error rate."
+        },
+        {
+          "id": "cs12",
+          "scn": "CS",
+          "topic": "Agentic Loop",
+          "miss": false,
+          "q": "Implementing the agentic loop — how do you know when to continue vs stop after each API call?",
+          "a": "Check the <code>stop_reason</code> field: continue on <code>\"tool_use\"</code>, stop on <code>\"end_turn\"</code>.",
+          "why": "It's Claude's explicit, structured loop-control signal: tool_use = run a tool and return results; end_turn = response complete."
+        },
+        {
+          "id": "cs13",
+          "scn": "CS",
+          "topic": "Tool Selection",
+          "miss": true,
+          "pick": "D",
+          "q": "Agent sometimes picks <code>get_customer</code> when <code>lookup_order</code> is right, on ambiguous requests. How to structure few-shot examples?",
+          "a": "Add 4-6 examples targeting the ambiguous scenarios, each showing reasoning for why one tool was chosen over a plausible alternative.",
+          "why": "Teaches comparative decision-making by contrasting tools. Grouping examples by tool teaches each in isolation — not the needed contrast."
+        }
+      ]
+    }
+  ]
+}
