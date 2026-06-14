@@ -32,6 +32,9 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
     on<StudyMarkReview>(_onMarkReview);
     on<StudyMarkGot>(_onMarkGot);
     on<StudyResetProgress>(_onResetProgress);
+    on<StudyAnswerPicked>(_onAnswerPicked);
+    on<StudyMultiSelectToggled>(_onMultiSelectToggled);
+    on<StudyAnswerCleared>(_onAnswerCleared);
 
     _decksSub = _decks.watch().listen(
           (decks) => add(StudyDecksReceived(decks)),
@@ -242,6 +245,51 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
     final deck = state.deck;
     if (deck == null) return;
     await _progress.resetDeck(deck.id);
+  }
+
+  void _onAnswerPicked(
+    StudyAnswerPicked event,
+    Emitter<StudyState> emit,
+  ) {
+    final card = state.currentCard;
+    if (card == null) return;
+    final next = Map<String, Object?>.from(state.userAnswers);
+    next[card.id] = event.answer;
+    emit(state.copyWith(userAnswers: next));
+  }
+
+  void _onMultiSelectToggled(
+    StudyMultiSelectToggled event,
+    Emitter<StudyState> emit,
+  ) {
+    final card = state.currentCard;
+    if (card == null) return;
+    final current = state.userAnswers[card.id];
+    final picks = current is List
+        ? List<int>.from(current.whereType<int>())
+        : <int>[];
+    if (picks.contains(event.choiceIndex)) {
+      picks.remove(event.choiceIndex);
+    } else {
+      picks
+        ..add(event.choiceIndex)
+        ..sort();
+    }
+    final next = Map<String, Object?>.from(state.userAnswers);
+    next[card.id] = picks;
+    emit(state.copyWith(userAnswers: next));
+  }
+
+  void _onAnswerCleared(
+    StudyAnswerCleared event,
+    Emitter<StudyState> emit,
+  ) {
+    final card = state.currentCard;
+    if (card == null) return;
+    if (!state.userAnswers.containsKey(card.id)) return;
+    final next = Map<String, Object?>.from(state.userAnswers)
+      ..remove(card.id);
+    emit(state.copyWith(userAnswers: next));
   }
 
   @override

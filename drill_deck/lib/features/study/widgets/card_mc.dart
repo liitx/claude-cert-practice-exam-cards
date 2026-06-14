@@ -11,10 +11,14 @@ class MultipleChoiceCardFront extends StatelessWidget {
   const MultipleChoiceCardFront({
     required this.card,
     required this.scenario,
+    this.picked,
+    this.onPick,
     super.key,
   });
   final MultipleChoiceCard card;
   final Scenario scenario;
+  final int? picked;
+  final ValueChanged<int>? onPick;
 
   @override
   Widget build(BuildContext context) {
@@ -43,15 +47,23 @@ class MultipleChoiceCardFront extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (var i = 0; i < card.choices.length; i++)
-                    _ChoiceRow(
+                    ChoiceRow(
                       letter: String.fromCharCode(65 + i),
                       text: card.choices[i],
+                      kind: i == picked
+                          ? ChoiceKind.picked
+                          : ChoiceKind.idle,
+                      onTap: onPick == null ? null : () => onPick!(i),
                     ),
                 ],
               ),
             ),
           ),
-          const FlipHint('tap to reveal the correct answer'),
+          FlipHint(
+            picked == null
+                ? 'pick a choice — tap card to reveal'
+                : 'tap card to reveal',
+          ),
         ],
       ),
     );
@@ -62,10 +74,12 @@ class MultipleChoiceCardBack extends StatelessWidget {
   const MultipleChoiceCardBack({
     required this.card,
     required this.scenario,
+    this.picked,
     super.key,
   });
   final MultipleChoiceCard card;
   final Scenario scenario;
+  final int? picked;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +87,7 @@ class MultipleChoiceCardBack extends StatelessWidget {
     final palette = theme.extension<ScenarioPalette>()!;
     final correctIdx = card.correct;
     final correctSafe = correctIdx >= 0 && correctIdx < card.choices.length;
+    final wasCorrect = picked == correctIdx;
     return CardFace(
       card: card,
       scenario: scenario,
@@ -81,6 +96,7 @@ class MultipleChoiceCardBack extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (picked != null) _ResultBadge(correct: wasCorrect),
             const FaceLabel('CORRECT ANSWER'),
             if (correctSafe)
               InlineHtmlText(
@@ -95,10 +111,10 @@ class MultipleChoiceCardBack extends StatelessWidget {
               ),
             const SizedBox(height: 18),
             for (var i = 0; i < card.choices.length; i++)
-              _ChoiceRow(
+              ChoiceRow(
                 letter: String.fromCharCode(65 + i),
                 text: card.choices[i],
-                highlight: i == correctIdx ? _ChoiceHighlight.correct : null,
+                kind: _kindFor(i),
               ),
             if (card.explanation != null && card.explanation!.isNotEmpty) ...[
               const SizedBox(height: 14),
@@ -141,78 +157,185 @@ class MultipleChoiceCardBack extends StatelessWidget {
       ),
     );
   }
+
+  ChoiceKind _kindFor(int i) {
+    if (i == card.correct) return ChoiceKind.correct;
+    if (i == picked) return ChoiceKind.wrong;
+    return ChoiceKind.idle;
+  }
 }
 
-enum _ChoiceHighlight { correct }
+enum ChoiceKind { idle, picked, correct, wrong }
 
-class _ChoiceRow extends StatelessWidget {
-  const _ChoiceRow({
+/// Reusable row used by both MC and MS card faces.
+class ChoiceRow extends StatelessWidget {
+  const ChoiceRow({
     required this.letter,
     required this.text,
-    this.highlight,
+    required this.kind,
+    this.onTap,
+    super.key,
   });
+
   final String letter;
   final String text;
-  final _ChoiceHighlight? highlight;
+  final ChoiceKind kind;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final palette = theme.extension<ScenarioPalette>()!;
     final mono = theme.extension<MonoTypography>()!;
-    final isCorrect = highlight == _ChoiceHighlight.correct;
-    final borderColor = isCorrect ? palette.got : AppColors.line;
-    final bg = isCorrect
-        ? palette.got.withValues(alpha: 0.12)
-        : AppColors.ink;
-    final letterBg = isCorrect ? palette.got : AppColors.surface2;
-    final letterFg = isCorrect ? AppColors.ink : AppColors.muted;
+    final colors = _colorsFor(kind, palette);
 
+    final row = Container(
+      decoration: BoxDecoration(
+        color: colors.bg,
+        border: Border.all(color: colors.border, width: 1.5),
+        borderRadius: BorderRadius.circular(11),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: colors.letterBg,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Text(
+              colors.letterText ?? letter,
+              style: mono.chip.copyWith(
+                fontSize: 12.5,
+                color: colors.letterFg,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: InlineHtmlText(
+                text,
+                baseStyle: TextStyle(
+                  fontSize: 14.5,
+                  height: 1.45,
+                  color: colors.textColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final wrapped = Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: row,
+    );
+
+    if (onTap == null) return wrapped;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          border: Border.all(color: borderColor, width: 1.5),
-          borderRadius: BorderRadius.circular(11),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: letterBg,
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: Text(
-                letter,
-                style: mono.chip.copyWith(
-                  fontSize: 12.5,
-                  color: letterFg,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: row,
+      ),
+    );
+  }
+
+  _ChoiceColors _colorsFor(ChoiceKind k, ScenarioPalette palette) {
+    switch (k) {
+      case ChoiceKind.idle:
+        return _ChoiceColors(
+          bg: AppColors.ink,
+          border: AppColors.line,
+          letterBg: AppColors.surface2,
+          letterFg: AppColors.muted,
+          textColor: AppColors.text,
+        );
+      case ChoiceKind.picked:
+        return _ChoiceColors(
+          bg: AppColors.action.withValues(alpha: 0.1),
+          border: AppColors.action,
+          letterBg: AppColors.action,
+          letterFg: Colors.white,
+          textColor: AppColors.text,
+        );
+      case ChoiceKind.correct:
+        return _ChoiceColors(
+          bg: palette.got.withValues(alpha: 0.12),
+          border: palette.got,
+          letterBg: palette.got,
+          letterFg: AppColors.ink,
+          textColor: Colors.white,
+          letterText: '✓',
+        );
+      case ChoiceKind.wrong:
+        return _ChoiceColors(
+          bg: palette.danger.withValues(alpha: 0.1),
+          border: palette.danger,
+          letterBg: palette.danger,
+          letterFg: Colors.white,
+          textColor: AppColors.text,
+          letterText: '×',
+        );
+    }
+  }
+}
+
+class _ChoiceColors {
+  _ChoiceColors({
+    required this.bg,
+    required this.border,
+    required this.letterBg,
+    required this.letterFg,
+    required this.textColor,
+    this.letterText,
+  });
+  final Color bg;
+  final Color border;
+  final Color letterBg;
+  final Color letterFg;
+  final Color textColor;
+  final String? letterText;
+}
+
+class _ResultBadge extends StatelessWidget {
+  const _ResultBadge({required this.correct});
+  final bool correct;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<ScenarioPalette>()!;
+    final mono = Theme.of(context).extension<MonoTypography>()!;
+    final bg = correct ? palette.got : palette.danger;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: Text(
+            correct ? 'CORRECT' : 'WRONG',
+            style: mono.chip.copyWith(
+              color: AppColors.ink,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: InlineHtmlText(
-                  text,
-                  baseStyle: TextStyle(
-                    fontSize: 14.5,
-                    height: 1.45,
-                    color: isCorrect ? Colors.white : AppColors.text,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

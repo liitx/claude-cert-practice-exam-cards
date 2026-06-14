@@ -213,8 +213,8 @@ class _Ready extends StatelessWidget {
                     context.read<StudyBloc>().add(const StudyFlipped()),
                 child: FlipCard(
                   flipped: state.flipped,
-                  front: _faceFront(card, scenario),
-                  back: _faceBack(card, scenario),
+                  front: _faceFront(context, card, scenario),
+                  back: _faceBack(context, card, scenario),
                 ),
               ),
             ),
@@ -234,29 +234,66 @@ class _Ready extends StatelessWidget {
     );
   }
 
-  Widget _faceFront(Card card, Scenario scenario) {
+  Widget _faceFront(BuildContext context, Card card, Scenario scenario) {
+    final answer = state.userAnswers[card.id];
+    final bloc = context.read<StudyBloc>();
     return switch (card) {
       BasicCard() => BasicCardFront(card: card, scenario: scenario),
-      MultipleChoiceCard() =>
-        MultipleChoiceCardFront(card: card, scenario: scenario),
-      MultiSelectCard() =>
-        MultiSelectCardFront(card: card, scenario: scenario),
-      TrueFalseCard() => TrueFalseCardFront(card: card, scenario: scenario),
-      FillInBlankCard() =>
-        FillInBlankCardFront(card: card, scenario: scenario),
+      MultipleChoiceCard() => MultipleChoiceCardFront(
+          card: card,
+          scenario: scenario,
+          picked: answer is int ? answer : null,
+          onPick: (i) => bloc.add(StudyAnswerPicked(i)),
+        ),
+      MultiSelectCard() => MultiSelectCardFront(
+          card: card,
+          scenario: scenario,
+          picked: answer is List
+              ? List<int>.from(answer.whereType<int>())
+              : const <int>[],
+          onToggle: (i) => bloc.add(StudyMultiSelectToggled(i)),
+        ),
+      TrueFalseCard() => TrueFalseCardFront(
+          card: card,
+          scenario: scenario,
+          picked: answer is bool ? answer : null,
+          onPick: (v) => bloc.add(StudyAnswerPicked(v)),
+        ),
+      FillInBlankCard() => FillInBlankCardFront(
+          card: card,
+          scenario: scenario,
+          picked: answer is String ? answer : null,
+          onChanged: (s) => bloc.add(StudyAnswerPicked(s)),
+        ),
     };
   }
 
-  Widget _faceBack(Card card, Scenario scenario) {
+  Widget _faceBack(BuildContext context, Card card, Scenario scenario) {
+    final answer = state.userAnswers[card.id];
     return switch (card) {
       BasicCard() => BasicCardBack(card: card, scenario: scenario),
-      MultipleChoiceCard() =>
-        MultipleChoiceCardBack(card: card, scenario: scenario),
-      MultiSelectCard() =>
-        MultiSelectCardBack(card: card, scenario: scenario),
-      TrueFalseCard() => TrueFalseCardBack(card: card, scenario: scenario),
-      FillInBlankCard() =>
-        FillInBlankCardBack(card: card, scenario: scenario),
+      MultipleChoiceCard() => MultipleChoiceCardBack(
+          card: card,
+          scenario: scenario,
+          picked: answer is int ? answer : null,
+        ),
+      MultiSelectCard() => MultiSelectCardBack(
+          card: card,
+          scenario: scenario,
+          picked: answer is List
+              ? List<int>.from(answer.whereType<int>())
+              : const <int>[],
+        ),
+      TrueFalseCard() => TrueFalseCardBack(
+          card: card,
+          scenario: scenario,
+          picked: answer is bool ? answer : null,
+        ),
+      FillInBlankCard() => FillInBlankCardBack(
+          card: card,
+          scenario: scenario,
+          picked: answer is String ? answer : null,
+        ),
     };
   }
 

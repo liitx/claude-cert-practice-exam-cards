@@ -1,8 +1,8 @@
 import 'package:drill_deck/features/study/widgets/card_chrome.dart';
+import 'package:drill_deck/features/study/widgets/card_mc.dart';
 import 'package:drill_deck/models/card.dart';
 import 'package:drill_deck/models/scenario.dart';
 import 'package:drill_deck/theme/app_colors.dart';
-import 'package:drill_deck/theme/mono_typography.dart';
 import 'package:drill_deck/theme/scenario_palette.dart';
 import 'package:drill_deck/widgets/inline_html_text.dart';
 import 'package:flutter/material.dart' hide Card;
@@ -11,14 +11,19 @@ class MultiSelectCardFront extends StatelessWidget {
   const MultiSelectCardFront({
     required this.card,
     required this.scenario,
+    this.picked = const [],
+    this.onToggle,
     super.key,
   });
   final MultiSelectCard card;
   final Scenario scenario;
+  final List<int> picked;
+  final ValueChanged<int>? onToggle;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final pickedSet = picked.toSet();
     return CardFace(
       card: card,
       scenario: scenario,
@@ -43,15 +48,23 @@ class MultiSelectCardFront extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (var i = 0; i < card.choices.length; i++)
-                    _MSChoice(
+                    ChoiceRow(
                       letter: String.fromCharCode(65 + i),
                       text: card.choices[i],
+                      kind: pickedSet.contains(i)
+                          ? ChoiceKind.picked
+                          : ChoiceKind.idle,
+                      onTap: onToggle == null ? null : () => onToggle!(i),
                     ),
                 ],
               ),
             ),
           ),
-          const FlipHint('tap to reveal which apply'),
+          FlipHint(
+            picked.isEmpty
+                ? 'tap any that apply — then tap card to reveal'
+                : 'tap card to reveal',
+          ),
         ],
       ),
     );
@@ -62,16 +75,24 @@ class MultiSelectCardBack extends StatelessWidget {
   const MultiSelectCardBack({
     required this.card,
     required this.scenario,
+    this.picked = const [],
     super.key,
   });
   final MultiSelectCard card;
   final Scenario scenario;
+  final List<int> picked;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final palette = theme.extension<ScenarioPalette>()!;
     final correctSet = card.correct.toSet();
+    final pickedSet = picked.toSet();
+    final answered = picked.isNotEmpty;
+    final isCorrect = answered &&
+        correctSet.length == pickedSet.length &&
+        correctSet.containsAll(pickedSet);
+
     return CardFace(
       card: card,
       scenario: scenario,
@@ -80,12 +101,13 @@ class MultiSelectCardBack extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (answered) _ResultBadge(correct: isCorrect),
             const FaceLabel('CORRECT SELECTIONS'),
             for (var i = 0; i < card.choices.length; i++)
-              _MSChoice(
+              ChoiceRow(
                 letter: String.fromCharCode(65 + i),
                 text: card.choices[i],
-                isCorrect: correctSet.contains(i),
+                kind: _kindFor(i, correctSet, pickedSet),
               ),
             if (card.explanation != null && card.explanation!.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -128,76 +150,42 @@ class MultiSelectCardBack extends StatelessWidget {
       ),
     );
   }
+
+  ChoiceKind _kindFor(int i, Set<int> correct, Set<int> picked) {
+    if (correct.contains(i)) return ChoiceKind.correct;
+    if (picked.contains(i)) return ChoiceKind.wrong;
+    return ChoiceKind.idle;
+  }
 }
 
-class _MSChoice extends StatelessWidget {
-  const _MSChoice({
-    required this.letter,
-    required this.text,
-    this.isCorrect,
-  });
-  final String letter;
-  final String text;
-  final bool? isCorrect;
+class _ResultBadge extends StatelessWidget {
+  const _ResultBadge({required this.correct});
+  final bool correct;
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<ScenarioPalette>()!;
-    final mono = Theme.of(context).extension<MonoTypography>()!;
-    final correct = isCorrect == true;
-    final wrong = isCorrect == false;
-    final borderColor =
-        correct ? palette.got : (wrong ? AppColors.line : AppColors.line);
-    final bg = correct
-        ? palette.got.withValues(alpha: 0.12)
-        : AppColors.ink;
-    final letterBg = correct ? palette.got : AppColors.surface2;
-    final letterFg = correct ? AppColors.ink : AppColors.muted;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          border: Border.all(color: borderColor, width: 1.5),
-          borderRadius: BorderRadius.circular(11),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: letterBg,
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: Text(
-                correct ? '✓' : letter,
-                style: mono.chip.copyWith(
-                  fontSize: 12.5,
-                  color: letterFg,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: correct ? palette.got : palette.danger,
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: Text(
+            correct ? 'CORRECT' : 'WRONG',
+            style: const TextStyle(
+              color: AppColors.ink,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+              fontFamilyFallback: ['SF Mono', 'Menlo', 'Consolas'],
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: InlineHtmlText(
-                  text,
-                  baseStyle: TextStyle(
-                    fontSize: 14.5,
-                    height: 1.45,
-                    color: correct ? Colors.white : AppColors.text,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

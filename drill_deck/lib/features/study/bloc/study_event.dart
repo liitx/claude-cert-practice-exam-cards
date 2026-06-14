@@ -61,3 +61,24 @@ final class StudyMarkGot extends StudyEvent {
 final class StudyResetProgress extends StudyEvent {
   const StudyResetProgress();
 }
+
+/// Records a single-value pick on the current card (MC index, TF bool,
+/// FIB text). The bloc keys it by the current card's id.
+final class StudyAnswerPicked extends StudyEvent {
+  const StudyAnswerPicked(this.answer);
+  final Object? answer;
+  @override
+  List<Object?> get props => [answer];
+}
+
+/// Toggles a single index in/out of the current card's MultiSelect pick set.
+final class StudyMultiSelectToggled extends StudyEvent {
+  const StudyMultiSelectToggled(this.choiceIndex);
+  final int choiceIndex;
+  @override
+  List<Object?> get props => [choiceIndex];
+}
+
+final class StudyAnswerCleared extends StudyEvent {
+  const StudyAnswerCleared();
+}

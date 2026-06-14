@@ -39,6 +39,7 @@ final class StudyState extends Equatable {
     this.progress = const {},
     this.filter = StudyFilter.all,
     this.counts = const StudyCounts.zero(),
+    this.userAnswers = const {},
     this.errorMessage,
   });
 
@@ -57,6 +58,12 @@ final class StudyState extends Equatable {
   final Map<String, ProgressState> progress;
   final StudyFilter filter;
   final StudyCounts counts;
+
+  /// In-memory map of card id -> the user's current pick on that card.
+  /// Value type varies by card type (int for MC, List<int> for MS, bool for
+  /// TF, String for FIB). Not persisted across sessions.
+  final Map<String, Object?> userAnswers;
+
   final String? errorMessage;
 
   Card? get currentCard =>
@@ -66,6 +73,12 @@ final class StudyState extends Equatable {
     final c = currentCard;
     if (c == null) return null;
     return progress[c.id];
+  }
+
+  Object? get currentCardAnswer {
+    final c = currentCard;
+    if (c == null) return null;
+    return userAnswers[c.id];
   }
 
   StudyState copyWith({
@@ -78,6 +91,7 @@ final class StudyState extends Equatable {
     Map<String, ProgressState>? progress,
     StudyFilter? filter,
     StudyCounts? counts,
+    Map<String, Object?>? userAnswers,
     String? errorMessage,
   }) {
     return StudyState(
@@ -90,6 +104,7 @@ final class StudyState extends Equatable {
       progress: progress ?? this.progress,
       filter: filter ?? this.filter,
       counts: counts ?? this.counts,
+      userAnswers: userAnswers ?? this.userAnswers,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
@@ -105,6 +120,7 @@ final class StudyState extends Equatable {
         progress,
         filter,
         counts,
+        userAnswers,
         errorMessage,
       ];
 }
