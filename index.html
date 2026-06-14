@@ -529,6 +529,8 @@ function refreshSaveBtn(){
     valid=!!(modal.q.trim()&&modal.a.trim()&&subjectOK);
   }else if(modal.type==='deck'){
     valid=!!(modal.name.trim()&&modal.firstLabel.trim());
+  }else if(modal.type==='import'){
+    valid=!!(modal.text&&modal.text.trim());
   }
   btn.disabled=!valid;
 }
@@ -594,6 +596,115 @@ function isUserSubject(deckId,key){
   if(userDeck&&userDeck.scenarios[key])return true;
   if((state.overlay.scenarios[deckId]||{})[key])return true;
   return false;
+}
+
+/* -------- export / import -------- */
+
+function buildExportThisDeck(){
+  const deckId=state.currentDeckId;
+  const userDeck=state.userDecks.find(d=>d.id===deckId);
+  const progress=state.progress[deckId]||{};
+  if(userDeck){
+    return {version:1,kind:'deck',deck:JSON.parse(JSON.stringify(userDeck)),progress};
+  }
+  return {
+    version:1,kind:'overlay',targetDeckId:deckId,
+    cards:JSON.parse(JSON.stringify((state.overlay.cards||{})[deckId]||[])),
+    scenarios:JSON.parse(JSON.stringify((state.overlay.scenarios||{})[deckId]||{})),
+    progress
+  };
+}
+function buildExportEverything(){
+  return {
+    version:1,kind:'all',
+    userDecks:JSON.parse(JSON.stringify(state.userDecks)),
+    overlay:JSON.parse(JSON.stringify(state.overlay)),
+    progress:JSON.parse(JSON.stringify(state.progress)),
+    exportedAt:new Date().toISOString()
+  };
+}
+function copyExport(scope){
+  const data=scope==='all'?buildExportEverything():buildExportThisDeck();
+  const text=JSON.stringify(data,null,2);
+  const done=ok=>{
+    const note=document.getElementById('export-note');
+    if(note)note.textContent=ok?'Copied to clipboard.':'Copy failed — use Download instead.';
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>done(true),()=>done(false));
+  }else done(false);
+}
+function downloadExport(scope){
+  const data=scope==='all'?buildExportEverything():buildExportThisDeck();
+  const text=JSON.stringify(data,null,2);
+  const blob=new Blob([text],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const stamp=new Date().toISOString().slice(0,10);
+  const baseName=scope==='all'?'drill-all':(data.kind==='deck'?(data.deck.name||'deck'):('overlay-'+data.targetDeckId));
+  a.href=url;
+  a.download=baseName.replace(/[^a-z0-9-]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase()+'-'+stamp+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+  URL.revokeObjectURL(url);
+}
+function openExportModal(){
+  modal={type:'export'};
+  render();
+}
+function openImportModal(){
+  modal={type:'import',text:'',error:'',replaceProgress:false};
+  render();
+}
+function doImport(){
+  if(!modal.text.trim()){modal.error='Paste JSON first.';render();return;}
+  let data;
+  try{data=JSON.parse(modal.text);}
+  catch(e){modal.error='Could not parse JSON: '+e.message;render();return;}
+  if(!data||typeof data!=='object'){modal.error='JSON must be an object.';render();return;}
+  if(!data.kind){modal.error='Missing "kind" field. Use JSON exported from this app.';render();return;}
+  try{
+    if(data.kind==='all'){
+      const existingIds=new Set(state.userDecks.map(d=>d.id));
+      (data.userDecks||[]).forEach(d=>{
+        let id=d.id||('imported-'+Math.random().toString(36).slice(2,7));
+        while(existingIds.has(id))id=id+'-'+Math.random().toString(36).slice(2,5);
+        existingIds.add(id);
+        state.userDecks.push({...d,id});
+      });
+      if(data.overlay&&typeof data.overlay==='object'){
+        for(const[deckId,arr]of Object.entries(data.overlay.cards||{})){
+          state.overlay.cards[deckId]=[...(state.overlay.cards[deckId]||[]),...(Array.isArray(arr)?arr:[])];
+        }
+        for(const[deckId,obj]of Object.entries(data.overlay.scenarios||{})){
+          state.overlay.scenarios[deckId]={...(state.overlay.scenarios[deckId]||{}),...(obj||{})};
+        }
+      }
+      if(data.progress&&typeof data.progress==='object'){
+        for(const[deckId,prog]of Object.entries(data.progress)){
+          state.progress[deckId]={...(state.progress[deckId]||{}),...(prog||{})};
+        }
+      }
+    }else if(data.kind==='deck'){
+      if(!data.deck||typeof data.deck!=='object')throw new Error('deck object missing');
+      const existingIds=new Set(state.userDecks.map(d=>d.id));
+      let id=data.deck.id||('imported-'+Math.random().toString(36).slice(2,7));
+      while(existingIds.has(id))id=id+'-'+Math.random().toString(36).slice(2,5);
+      state.userDecks.push({...data.deck,id});
+      if(data.progress)state.progress[id]={...(state.progress[id]||{}),...data.progress};
+    }else if(data.kind==='overlay'){
+      const targetId=data.targetDeckId;
+      if(!targetId)throw new Error('targetDeckId missing');
+      state.overlay.cards[targetId]=[...(state.overlay.cards[targetId]||[]),...(Array.isArray(data.cards)?data.cards:[])];
+      state.overlay.scenarios[targetId]={...(state.overlay.scenarios[targetId]||{}),...(data.scenarios||{})};
+      if(data.progress)state.progress[targetId]={...(state.progress[targetId]||{}),...data.progress};
+    }else{
+      throw new Error('Unknown kind: '+data.kind);
+    }
+  }catch(e){modal.error='Import failed: '+e.message;render();return;}
+  save();
+  modal=null;
+  filter='all';
+  render();
 }
 
 function deckHasUserContent(deckId){
@@ -812,6 +923,75 @@ function modalHTML(){
       </div>
     </div>`;
   }
+  if(modal.type==='export'){
+    const deckId=state.currentDeckId;
+    const d=currentDeck();
+    const userDeck=state.userDecks.find(x=>x.id===deckId);
+    const overlayCards=((state.overlay.cards||{})[deckId]||[]).length;
+    const overlayScn=Object.keys((state.overlay.scenarios||{})[deckId]||{}).length;
+    const progCount=Object.keys(state.progress[deckId]||{}).length;
+    const totalUserDecks=state.userDecks.length;
+    const totalOverlayDecks=Object.keys(state.overlay.cards||{}).filter(k=>(state.overlay.cards[k]||[]).length).length;
+    let thisSummary;
+    if(userDeck){
+      thisSummary=`Private deck <b>${esc(d.name)}</b> with ${userDeck.cards.length} card${userDeck.cards.length===1?'':'s'}, plus your progress (${progCount} marked).`;
+    }else if(overlayCards||overlayScn){
+      thisSummary=`Your additions to <b>${esc(d.name)}</b> (${overlayCards} card${overlayCards===1?'':'s'}, ${overlayScn} subject${overlayScn===1?'':'s'}) and progress.`;
+    }else{
+      thisSummary=`Just your progress on <b>${esc(d.name)}</b> (${progCount} marked).`;
+    }
+    const hasAll=totalUserDecks>0||totalOverlayDecks>0||Object.keys(state.progress).length>0;
+    return `<div class="backdrop" onclick="if(event.target===this)closeModal()">
+      <div class="sheet" role="dialog" aria-modal="true">
+        <h2>Export</h2>
+        <div class="sub">Move your decks and progress to another device. The JSON is private to you — sharing it is your call.</div>
+
+        <div class="field">
+          <label>This deck</label>
+          <div style="font-size:13.5px;line-height:1.55;color:var(--muted)">${thisSummary}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+            <button class="add-btn" onclick="copyExport('this')">Copy JSON</button>
+            <button class="add-btn" onclick="downloadExport('this')">Download .json</button>
+          </div>
+        </div>
+
+        ${hasAll?`
+        <div class="field">
+          <label>Everything you've made</label>
+          <div style="font-size:13.5px;line-height:1.55;color:var(--muted)">All ${totalUserDecks} private deck${totalUserDecks===1?'':'s'}, additions across ${totalOverlayDecks} shared deck${totalOverlayDecks===1?'':'s'}, and all progress.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+            <button class="add-btn" onclick="copyExport('all')">Copy JSON</button>
+            <button class="add-btn" onclick="downloadExport('all')">Download .json</button>
+          </div>
+        </div>`:''}
+
+        <div id="export-note" style="margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--got);min-height:18px"></div>
+
+        <div class="actions">
+          <button class="btn btn-cancel" onclick="closeModal()" style="grid-column:1 / -1">Close</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(modal.type==='import'){
+    return `<div class="backdrop" onclick="if(event.target===this)closeModal()">
+      <div class="sheet" role="dialog" aria-modal="true">
+        <h2>Import</h2>
+        <div class="sub">Paste JSON exported from another device. Existing decks aren't overwritten — imports add alongside what's already here.</div>
+
+        <div class="field">
+          <label>Exported JSON</label>
+          <textarea placeholder='{"version":1,"kind":"deck",...}' oninput="mset('text',this.value)" style="min-height:160px;font-family:var(--mono);font-size:12px;line-height:1.5">${esc(modal.text||'')}</textarea>
+          ${modal.error?`<div style="margin-top:8px;color:var(--cs);font-size:13px">${esc(modal.error)}</div>`:''}
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-save" onclick="doImport()" ${(modal.text||'').trim()?'':'disabled'}>Import</button>
+        </div>
+      </div>
+    </div>`;
+  }
   if(modal.type==='deck'){
     const valid=modal.name.trim()&&modal.firstLabel.trim();
     return `<div class="backdrop" onclick="if(event.target===this)closeModal()">
@@ -940,8 +1120,10 @@ function render(){
     <div class="filters">${chips}</div>
     ${body}
     <div class="deck-meta">
-      <button class="reset" onclick="resetAll()">reset progress for this deck</button>
+      <button class="reset" onclick="resetAll()">reset progress</button>
       ${deckHasUserContent(state.currentDeckId)?` · <button class="reset share" onclick="shareDeck()">share to library</button>`:''}
+      · <button class="reset" onclick="openExportModal()">export</button>
+      · <button class="reset" onclick="openImportModal()">import</button>
       ${!d.builtin?` · <button onclick="deleteDeck()">delete this deck</button>`:''}
     </div>
     ${modalHTML()}`;
