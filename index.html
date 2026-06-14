@@ -223,6 +223,94 @@
   .subject-count{flex:1;font-size:12px;color:var(--muted);font-family:var(--mono);
     letter-spacing:.02em}
   .subject-row .sub-x{flex:0 0 auto;width:30px;height:30px;font-size:16px}
+
+  /* card type tabs in form */
+  .type-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .type-tab{font:600 12px var(--sans);background:var(--surface-2);border:1px solid var(--line);
+    color:var(--muted);border-radius:99px;padding:8px 14px;cursor:pointer;min-height:36px;transition:.15s}
+  .type-tab:hover{color:var(--text);border-color:var(--faint)}
+  .type-tab.on{background:var(--action);color:#fff;border-color:var(--action)}
+
+  /* choices editor */
+  .choices-edit{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .choice-edit{display:flex;align-items:center;gap:8px;background:var(--ink);
+    border:1px solid var(--line);border-radius:11px;padding:6px 8px}
+  .choice-edit input[type=text]{flex:1;background:transparent;border:none;outline:none;
+    color:var(--text);font:450 14.5px var(--sans);padding:10px 6px;min-height:40px;min-width:0}
+  .choice-mark{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);
+    background:transparent;color:var(--muted);font:700 13px var(--mono);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+  .choice-mark:hover{border-color:var(--got);color:var(--got)}
+  .choice-mark.on{background:var(--got);border-color:var(--got);color:var(--ink)}
+  .choice-remove{background:transparent;border:none;color:var(--faint);font:600 18px var(--sans);
+    cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;border-radius:8px}
+  .choice-remove:hover{color:var(--cs);background:rgba(217,122,138,.08)}
+  .add-choice{background:transparent;border:1px dashed var(--line);color:var(--muted);
+    font:550 12.5px var(--mono);padding:10px;border-radius:11px;cursor:pointer;min-height:42px;
+    width:100%;margin-top:4px}
+  .add-choice:hover{border-color:var(--action);color:var(--action)}
+
+  /* true/false picker in form */
+  .tf-pick-edit{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+  .tf-pick-edit button{background:var(--ink);border:2px solid var(--line);color:var(--text);
+    font:650 15px var(--sans);padding:14px;border-radius:11px;cursor:pointer;min-height:52px;
+    transition:.15s}
+  .tf-pick-edit button.on{border-color:var(--got);background:rgba(95,184,154,.1);color:var(--got)}
+
+  /* image upload in form */
+  .image-up{margin-top:6px}
+  .image-up label.upload-btn{display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--ink);border:1px dashed var(--line);color:var(--muted);
+    font:550 13.5px var(--sans);padding:14px;border-radius:11px;cursor:pointer;min-height:50px}
+  .image-up label.upload-btn:hover{border-color:var(--action);color:var(--action)}
+  .image-up input[type=file]{display:none}
+  .image-preview{position:relative;margin-top:8px;border-radius:11px;overflow:hidden;
+    border:1px solid var(--line)}
+  .image-preview img{display:block;width:100%;max-height:240px;object-fit:contain;background:#000}
+  .image-preview .remove-img{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.75);
+    color:#fff;border:none;border-radius:99px;padding:6px 12px;font:550 11.5px var(--mono);cursor:pointer;min-height:30px}
+  .image-preview .remove-img:hover{background:rgba(217,122,138,.85)}
+
+  /* card front: image and interactives */
+  .card-image{display:block;width:100%;max-height:180px;object-fit:contain;
+    background:#0a0c11;border-radius:10px;margin-bottom:14px;border:1px solid var(--line)}
+  .face.back .card-image{max-height:120px}
+  .choices-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .choice{display:flex;align-items:flex-start;gap:10px;background:var(--ink);
+    border:1.5px solid var(--line);color:var(--text);font:500 14.5px/1.45 var(--sans);
+    padding:11px 12px;border-radius:11px;cursor:pointer;text-align:left;transition:.12s;
+    min-height:48px;width:100%}
+  .choice:hover{border-color:var(--faint)}
+  .choice.picked{border-color:var(--action);background:rgba(124,131,255,.1)}
+  .choice.correct{border-color:var(--got);background:rgba(95,184,154,.12);color:#fff}
+  .choice.wrong{border-color:var(--cs);background:rgba(217,122,138,.1)}
+  .choice-letter{flex:0 0 28px;height:28px;border-radius:7px;background:var(--surface-2);
+    color:var(--muted);font:700 12.5px var(--mono);display:flex;align-items:center;
+    justify-content:center;margin-top:1px}
+  .choice.picked .choice-letter{background:var(--action);color:#fff}
+  .choice.correct .choice-letter{background:var(--got);color:var(--ink)}
+  .choice.wrong .choice-letter{background:var(--cs);color:#fff}
+  .choice-text{flex:1;line-height:1.5}
+  .tf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .tf-row .choice{justify-content:center;align-items:center;font-weight:650;font-size:16px;
+    padding:18px;min-height:64px}
+  .tf-row .choice-text{flex:0 0 auto}
+  .fib-input{margin-top:14px;width:100%;background:var(--ink);border:1.5px solid var(--line);
+    color:var(--text);font:500 16px var(--sans);padding:14px;border-radius:11px;min-height:52px}
+  .fib-input:focus{outline:none;border-color:var(--action)}
+  .fib-input.correct{border-color:var(--got);background:rgba(95,184,154,.08)}
+  .fib-input.wrong{border-color:var(--cs);background:rgba(217,122,138,.08)}
+
+  /* result badge on back */
+  .result-badge{font:700 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;
+    padding:4px 9px;border-radius:99px;display:inline-block;margin-bottom:10px}
+  .result-badge.correct{background:rgba(95,184,154,.2);color:var(--got)}
+  .result-badge.wrong{background:rgba(217,122,138,.2);color:var(--cs)}
+  .result-badge.skipped{background:var(--surface-2);color:var(--muted)}
+  .your-answer{font-family:var(--mono);font-size:12.5px;color:var(--muted);
+    margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);line-height:1.55}
+  .your-answer b{color:var(--text);font-weight:600}
   .danger-zone{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line)}
   .danger-zone .btn-danger{background:rgba(217,122,138,.12);color:var(--cs);border-color:transparent;
     width:100%;padding:14px;font-size:14px;min-height:48px}
@@ -344,6 +432,15 @@ let idx=0;
 let flipped=false;
 let modal=null;
 let pendingSync=null;
+let userAnswers={};
+const MAX_IMAGE_BYTES=800*1024;
+const CARD_TYPES=[
+  {id:'basic',label:'Basic'},
+  {id:'mc',label:'Multiple choice'},
+  {id:'ms',label:'Select all'},
+  {id:'tf',label:'True / False'},
+  {id:'fib',label:'Fill blank'},
+];
 
 function load(){
   try{
@@ -514,9 +611,82 @@ function deleteDeck(){
 function openCardModal(){
   const scenarios=deckScenarios(state.currentDeckId);
   const keys=Object.keys(scenarios);
-  modal={type:'card',subject:keys[0]||'',topic:'',q:'',a:'',why:'',missed:false,pick:'',
+  modal={type:'card',cardType:'basic',subject:keys[0]||'',topic:'',q:'',a:'',why:'',
+    choices:['',''],correctMC:-1,correctMS:[],correctTF:null,accepted:'',image:'',
+    missed:false,pick:'',
     newSubject:keys.length?null:{label:'',color:PRESET_COLORS[0]}};
   render();
+}
+function setCardType(t){
+  modal.cardType=t;
+  if(t==='mc'||t==='ms'){
+    if(!Array.isArray(modal.choices)||modal.choices.length<2)modal.choices=['',''];
+  }
+  modal.correctMC=-1;
+  modal.correctMS=[];
+  modal.correctTF=null;
+  render();
+}
+function addChoice(){modal.choices.push('');render();}
+function removeChoice(i){
+  modal.choices.splice(i,1);
+  if(modal.correctMC===i)modal.correctMC=-1;
+  else if(modal.correctMC>i)modal.correctMC--;
+  modal.correctMS=modal.correctMS.filter(x=>x!==i).map(x=>x>i?x-1:x);
+  render();
+}
+function setChoice(i,v){modal.choices[i]=v;refreshUI();}
+function setCorrectMC(i){modal.correctMC=i;render();}
+function toggleCorrectMS(i){
+  const at=modal.correctMS.indexOf(i);
+  if(at>=0)modal.correctMS.splice(at,1);
+  else modal.correctMS.push(i);
+  modal.correctMS.sort((a,b)=>a-b);
+  render();
+}
+function setCorrectTF(v){modal.correctTF=v;render();}
+function handleImageUpload(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  if(file.size>MAX_IMAGE_BYTES){
+    alert('Image is '+Math.round(file.size/1024)+'KB. Pick one under '+Math.round(MAX_IMAGE_BYTES/1024)+'KB so we stay within browser storage.');
+    input.value='';
+    return;
+  }
+  const reader=new FileReader();
+  reader.onload=e=>{modal.image=e.target.result;render();};
+  reader.readAsDataURL(file);
+}
+function removeImage(){modal.image='';render();}
+
+function pickAnswerMC(cardId,i){userAnswers[cardId]=i;render();}
+function pickAnswerMS(cardId,i){
+  const cur=Array.isArray(userAnswers[cardId])?[...userAnswers[cardId]]:[];
+  const at=cur.indexOf(i);
+  if(at>=0)cur.splice(at,1);else cur.push(i);
+  cur.sort((a,b)=>a-b);
+  userAnswers[cardId]=cur;
+  render();
+}
+function pickAnswerTF(cardId,v){userAnswers[cardId]=v;render();}
+function pickAnswerFIB(cardId,v){userAnswers[cardId]=v;}
+
+function normFIB(s){return String(s||'').trim().toLowerCase().replace(/\s+/g,' ');}
+function isAnswerCorrect(card,pick){
+  const t=card.type||'basic';
+  if(t==='mc')return pick===card.correct;
+  if(t==='ms'){
+    if(!Array.isArray(pick))return false;
+    const exp=Array.isArray(card.correct)?[...card.correct].sort((a,b)=>a-b):[];
+    const got=[...pick].sort((a,b)=>a-b);
+    return exp.length===got.length&&exp.every((v,i)=>v===got[i]);
+  }
+  if(t==='tf')return pick===card.correct;
+  if(t==='fib'){
+    if(typeof pick!=='string'||!pick.trim())return false;
+    return (card.accepted||[]).some(a=>normFIB(a)===normFIB(pick));
+  }
+  return null;
 }
 function openDeckModal(){
   modal={type:'deck',name:'',firstLabel:'',firstColor:PRESET_COLORS[0]};
@@ -534,7 +704,15 @@ function refreshSaveBtn(){
   let valid=false;
   if(modal.type==='card'){
     const subjectOK=modal.newSubject?!!modal.newSubject.label.trim():!!modal.subject;
-    valid=!!(modal.q.trim()&&modal.a.trim()&&subjectOK);
+    if(!subjectOK||!modal.q.trim()){valid=false;}
+    else{
+      const t=modal.cardType||'basic';
+      if(t==='basic')valid=!!modal.a.trim();
+      else if(t==='mc')valid=modal.choices.length>=2&&modal.choices.every(c=>c.trim())&&modal.correctMC>=0&&modal.correctMC<modal.choices.length;
+      else if(t==='ms')valid=modal.choices.length>=2&&modal.choices.every(c=>c.trim())&&Array.isArray(modal.correctMS)&&modal.correctMS.length>0;
+      else if(t==='tf')valid=modal.correctTF===true||modal.correctTF===false;
+      else if(t==='fib')valid=modal.accepted.split('\n').some(l=>l.trim());
+    }
   }else if(modal.type==='deck'){
     valid=!!(modal.name.trim()&&modal.firstLabel.trim());
   }else if(modal.type==='import'){
@@ -801,18 +979,44 @@ function saveCard(){
     state.overlay.scenarios[deckId][key]={label,color:modal.newSubject.color};
     subjectKey=key;
   }
-  if(!modal.q.trim()||!modal.a.trim()||!subjectKey)return;
+  if(!modal.q.trim()||!subjectKey)return;
+  const t=modal.cardType||'basic';
   const card={
     id:'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     scn:subjectKey,
     topic:modal.topic.trim()||'General',
     q:modal.q.trim(),
-    a:modal.a.trim(),
     why:modal.why.trim(),
     miss:!!modal.missed,
     user:true
   };
+  if(t==='basic'){
+    if(!modal.a.trim())return;
+    card.a=modal.a.trim();
+  }else{
+    card.type=t;
+    if(modal.a.trim())card.a=modal.a.trim();
+    if(t==='mc'){
+      if(modal.choices.length<2||modal.choices.some(c=>!c.trim()))return;
+      if(modal.correctMC<0||modal.correctMC>=modal.choices.length)return;
+      card.choices=modal.choices.map(c=>c.trim());
+      card.correct=modal.correctMC;
+    }else if(t==='ms'){
+      if(modal.choices.length<2||modal.choices.some(c=>!c.trim()))return;
+      if(!modal.correctMS.length)return;
+      card.choices=modal.choices.map(c=>c.trim());
+      card.correct=[...modal.correctMS].sort((a,b)=>a-b);
+    }else if(t==='tf'){
+      if(modal.correctTF!==true&&modal.correctTF!==false)return;
+      card.correct=modal.correctTF;
+    }else if(t==='fib'){
+      const accepted=modal.accepted.split('\n').map(s=>s.trim()).filter(s=>s);
+      if(!accepted.length)return;
+      card.accepted=accepted;
+    }
+  }
   if(modal.missed&&modal.pick.trim())card.pick=modal.pick.trim();
+  if(modal.image)card.image=modal.image;
   state.overlay.cards[deckId]=state.overlay.cards[deckId]||[];
   state.overlay.cards[deckId].push(card);
   save();
@@ -845,6 +1049,100 @@ function saveDeck(){
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function txt(s,allowHTML){return allowHTML?(s||''):esc(s);}
+
+function renderCardFront(card,scenarios){
+  const s=scenarios[card.scn]||{label:card.scn,color:'#7c83ff'};
+  const t=card.type||'basic';
+  const pick=userAnswers[card.id];
+  const allowHTML=!card.user;
+  const userCard=isUserCard(state.currentDeckId,card.id);
+  let interactive='';
+  if(t==='mc'){
+    interactive=`<div class="choices-list">${(card.choices||[]).map((c,i)=>`
+      <button class="choice ${pick===i?'picked':''}" onclick="event.stopPropagation();pickAnswerMC('${esc(card.id)}',${i})">
+        <span class="choice-letter">${String.fromCharCode(65+i)}</span>
+        <span class="choice-text">${esc(c)}</span>
+      </button>`).join('')}</div>`;
+  }else if(t==='ms'){
+    const picks=Array.isArray(pick)?pick:[];
+    interactive=`<div class="choices-list">${(card.choices||[]).map((c,i)=>`
+      <button class="choice ${picks.includes(i)?'picked':''}" onclick="event.stopPropagation();pickAnswerMS('${esc(card.id)}',${i})">
+        <span class="choice-letter">${picks.includes(i)?'&check;':String.fromCharCode(65+i)}</span>
+        <span class="choice-text">${esc(c)}</span>
+      </button>`).join('')}</div>`;
+  }else if(t==='tf'){
+    interactive=`<div class="tf-row">
+      <button class="choice ${pick===true?'picked':''}" onclick="event.stopPropagation();pickAnswerTF('${esc(card.id)}',true)"><span class="choice-text">True</span></button>
+      <button class="choice ${pick===false?'picked':''}" onclick="event.stopPropagation();pickAnswerTF('${esc(card.id)}',false)"><span class="choice-text">False</span></button>
+    </div>`;
+  }else if(t==='fib'){
+    const val=typeof pick==='string'?pick:'';
+    interactive=`<input class="fib-input" type="text" placeholder="Type your answer..." value="${esc(val)}" oninput="event.stopPropagation();pickAnswerFIB('${esc(card.id)}',this.value)" onclick="event.stopPropagation()">`;
+  }
+  return `
+    <div class="stripe" style="background:${s.color}"></div>
+    ${userCard?`<div class="card-tools"><button class="card-tool danger" onclick="event.stopPropagation();deleteCard('${esc(state.currentDeckId)}','${esc(card.id)}')">delete</button></div>`:''}
+    <div class="tags">
+      <span class="scn" style="background:${s.color}">${esc(s.label)}</span>
+      <span class="topic">${esc(card.topic)}</span>
+      ${card.miss?'<span class="miss-flag">you missed this</span>':''}
+    </div>
+    ${card.image?`<img class="card-image" src="${card.image}" alt="">`:''}
+    <div class="q-label">${t==='basic'?'Situation':'Question'}</div>
+    <div class="q">${txt(card.q,allowHTML)}</div>
+    ${interactive}
+    <div class="flip-hint">${interactive?'tap card to reveal answer':'tap or press space to reveal'}</div>`;
+}
+
+function renderCardBack(card,scenarios){
+  const s=scenarios[card.scn]||{label:card.scn,color:'#7c83ff'};
+  const t=card.type||'basic';
+  const pick=userAnswers[card.id];
+  const allowHTML=!card.user;
+  let badge='',correctBlock='',pickBlock='';
+  const answered=t==='basic'?true:(pick!==undefined&&!(t==='fib'&&!String(pick||'').trim())&&!(t==='ms'&&Array.isArray(pick)&&pick.length===0));
+  if(t!=='basic'){
+    if(!answered)badge='<span class="result-badge skipped">no answer</span>';
+    else if(isAnswerCorrect(card,pick))badge='<span class="result-badge correct">correct</span>';
+    else badge='<span class="result-badge wrong">wrong</span>';
+  }
+  if(t==='basic'){
+    correctBlock=`<div class="a-label">Correct approach</div><div class="a">${txt(card.a,allowHTML)}</div>`;
+  }else if(t==='mc'){
+    const ci=card.correct;
+    correctBlock=`<div class="a-label">Correct answer</div><div class="a">${String.fromCharCode(65+ci)} &middot; ${esc((card.choices||[])[ci]||'')}</div>`;
+    if(answered&&pick!==ci)pickBlock=`<div class="your-answer">You picked <b>${String.fromCharCode(65+pick)}</b>: ${esc((card.choices||[])[pick]||'')}</div>`;
+  }else if(t==='ms'){
+    const list=(Array.isArray(card.correct)?card.correct:[]).map(i=>`${String.fromCharCode(65+i)} &middot; ${esc((card.choices||[])[i]||'')}`).join('<br>');
+    correctBlock=`<div class="a-label">Correct selections</div><div class="a">${list}</div>`;
+    if(answered){
+      const ys=(pick||[]).map(i=>String.fromCharCode(65+i)).join(', ');
+      pickBlock=`<div class="your-answer">You picked <b>${ys||'nothing'}</b></div>`;
+    }
+  }else if(t==='tf'){
+    correctBlock=`<div class="a-label">Correct answer</div><div class="a">${card.correct?'True':'False'}</div>`;
+    if(answered&&pick!==card.correct)pickBlock=`<div class="your-answer">You picked <b>${pick?'True':'False'}</b></div>`;
+  }else if(t==='fib'){
+    const acc=card.accepted||[];
+    const alts=acc.slice(1);
+    correctBlock=`<div class="a-label">Accepted answer${acc.length>1?'s':''}</div><div class="a">${esc(acc[0]||'')}${alts.length?'<div class="why" style="margin-top:6px">also: '+alts.map(esc).join(', ')+'</div>':''}</div>`;
+    if(typeof pick==='string'&&pick.trim())pickBlock=`<div class="your-answer">You typed <b>${esc(pick)}</b></div>`;
+  }
+  const aExtra=(t!=='basic'&&card.a&&card.a.trim())?`<div class="why" style="margin-top:10px">${txt(card.a,allowHTML)}</div>`:'';
+  return `
+    <div class="stripe" style="background:${s.color}"></div>
+    <div class="tags">
+      <span class="scn" style="background:${s.color}">${esc(s.label)}</span>
+      <span class="topic">${esc(card.topic)}</span>
+    </div>
+    ${card.image?`<img class="card-image" src="${card.image}" alt="">`:''}
+    ${badge}
+    ${correctBlock}
+    ${aExtra}
+    ${card.why?`<div class="why" ${t!=='basic'?'style="margin-top:10px"':''}>${txt(card.why,allowHTML)}</div>`:''}
+    ${pickBlock}
+    ${card.miss&&card.pick?`<div class="picked">you originally picked <b>${esc(card.pick)}</b></div>`:''}`;
+}
 
 function swatchRow(selected,onPick){
   return `<div class="swatches">${PRESET_COLORS.map(c=>
@@ -916,19 +1214,81 @@ function modalHTML(){
         </div>`:''}
 
         <div class="field">
+          <label>Type</label>
+          <div class="type-tabs">
+            ${CARD_TYPES.map(ct=>`<button type="button" class="type-tab ${(modal.cardType||'basic')===ct.id?'on':''}" onclick="setCardType('${ct.id}')">${esc(ct.label)}</button>`).join('')}
+          </div>
+        </div>
+
+        <div class="field">
           <label>Topic</label>
           <input type="text" placeholder="e.g. Batch Processing" value="${esc(modal.topic)}" oninput="mset('topic',this.value)">
         </div>
 
         <div class="field">
-          <label>Situation / Question</label>
-          <textarea placeholder="Describe the scenario or question..." oninput="mset('q',this.value)">${esc(modal.q)}</textarea>
+          <label>Image (optional)</label>
+          <div class="image-up">
+            ${modal.image?`
+              <div class="image-preview">
+                <img src="${modal.image}" alt="">
+                <button type="button" class="remove-img" onclick="removeImage()">Remove</button>
+              </div>`:`
+              <label class="upload-btn">
+                <input type="file" accept="image/*" onchange="handleImageUpload(this)">
+                <span>Pick from library &middot; under ${Math.round(MAX_IMAGE_BYTES/1024)}KB</span>
+              </label>`}
+          </div>
         </div>
 
         <div class="field">
+          <label>${(modal.cardType||'basic')==='basic'?'Situation / Question':'Question'}</label>
+          <textarea placeholder="Describe the scenario or question..." oninput="mset('q',this.value)">${esc(modal.q)}</textarea>
+        </div>
+
+        ${(modal.cardType||'basic')==='basic'?`
+        <div class="field">
           <label>Correct answer</label>
           <textarea placeholder="The right approach..." oninput="mset('a',this.value)">${esc(modal.a)}</textarea>
-        </div>
+        </div>`:''}
+
+        ${modal.cardType==='mc'||modal.cardType==='ms'?`
+        <div class="field">
+          <label>Choices &middot; ${modal.cardType==='mc'?'tap a mark to set the correct one':'tap marks for every correct choice'}</label>
+          <div class="choices-edit">
+            ${modal.choices.map((c,i)=>{
+              const on=modal.cardType==='mc'?modal.correctMC===i:modal.correctMS.includes(i);
+              const mark=modal.cardType==='mc'?(on?'&#x25CF;':String.fromCharCode(65+i)):(on?'&check;':String.fromCharCode(65+i));
+              const handler=modal.cardType==='mc'?`setCorrectMC(${i})`:`toggleCorrectMS(${i})`;
+              return `<div class="choice-edit">
+                <button type="button" class="choice-mark ${on?'on':''}" onclick="${handler}" title="mark as ${on?'not ':''}correct">${mark}</button>
+                <input type="text" placeholder="Choice ${String.fromCharCode(65+i)}" value="${esc(c)}" oninput="setChoice(${i},this.value)">
+                <button type="button" class="choice-remove" onclick="removeChoice(${i})" title="remove" ${modal.choices.length<=2?'disabled':''}>&times;</button>
+              </div>`;
+            }).join('')}
+          </div>
+          <button type="button" class="add-choice" onclick="addChoice()">+ add choice</button>
+        </div>`:''}
+
+        ${modal.cardType==='tf'?`
+        <div class="field">
+          <label>Correct answer</label>
+          <div class="tf-pick-edit">
+            <button type="button" class="${modal.correctTF===true?'on':''}" onclick="setCorrectTF(true)">True</button>
+            <button type="button" class="${modal.correctTF===false?'on':''}" onclick="setCorrectTF(false)">False</button>
+          </div>
+        </div>`:''}
+
+        ${modal.cardType==='fib'?`
+        <div class="field">
+          <label>Accepted answers &middot; one per line, case-insensitive</label>
+          <textarea placeholder="primary answer&#10;alternative spelling&#10;synonym" oninput="mset('accepted',this.value)">${esc(modal.accepted||'')}</textarea>
+        </div>`:''}
+
+        ${modal.cardType&&modal.cardType!=='basic'?`
+        <div class="field">
+          <label>Explanation (optional)</label>
+          <textarea placeholder="Plain-text summary shown on the back..." oninput="mset('a',this.value)">${esc(modal.a)}</textarea>
+        </div>`:''}
 
         <div class="field">
           <label>Why (optional)</label>
@@ -1154,35 +1514,12 @@ function render(){
       <div class="empty-cta"><button class="add-btn primary" onclick="openCardModal()"><span class="plus">+</span> New card</button></div>
     </div>`;
   }else{
-    const card=dk[idx];const s=scenarios[card.scn]||{label:card.scn,color:'#7c83ff'};const stCard=st[card.id];
-    const userCard=isUserCard(state.currentDeckId,card.id);
-    const allowHTML=!card.user;
+    const card=dk[idx];const stCard=st[card.id];
     body=`
     <div class="stage">
       <div class="card ${flipped?'flipped':''}" onclick="flip()">
-        <div class="face front">
-          <div class="stripe" style="background:${s.color}"></div>
-          ${userCard?`<div class="card-tools"><button class="card-tool danger" onclick="event.stopPropagation();deleteCard('${state.currentDeckId}','${card.id}')">delete</button></div>`:''}
-          <div class="tags">
-            <span class="scn" style="background:${s.color}">${esc(s.label)}</span>
-            <span class="topic">${esc(card.topic)}</span>
-            ${card.miss?'<span class="miss-flag">you missed this</span>':''}
-          </div>
-          <div class="q-label">Situation</div>
-          <div class="q">${txt(card.q,allowHTML)}</div>
-          <div class="flip-hint">tap or press space to reveal →</div>
-        </div>
-        <div class="face back">
-          <div class="stripe" style="background:${s.color}"></div>
-          <div class="tags">
-            <span class="scn" style="background:${s.color}">${esc(s.label)}</span>
-            <span class="topic">${esc(card.topic)}</span>
-          </div>
-          <div class="a-label">Correct approach</div>
-          <div class="a">${txt(card.a,allowHTML)}</div>
-          ${card.why?`<div class="why">${txt(card.why,allowHTML)}</div>`:''}
-          ${card.miss&&card.pick?`<div class="picked">you picked <b>${esc(card.pick)}</b> — retrain the reflex above</div>`:''}
-        </div>
+        <div class="face front">${renderCardFront(card,scenarios)}</div>
+        <div class="face back">${renderCardBack(card,scenarios)}</div>
       </div>
     </div>
     <div class="controls">

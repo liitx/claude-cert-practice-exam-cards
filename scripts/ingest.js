@@ -79,11 +79,62 @@ function checkSubjectKey(k) {
   return null;
 }
 
+const ALLOWED_TYPES = new Set(['basic', 'mc', 'ms', 'tf', 'fib']);
+const MAX_CHOICES = 8;
+const MAX_ACCEPTED = 10;
+const MAX_IMAGE_LEN = 1_200_000; // base64 of an 800KB image is ~1.1MB
+
 function sanitizeCard(c) {
-  for (const f of ['scn', 'topic', 'q', 'a']) {
+  for (const f of ['scn', 'topic', 'q']) {
     const err = checkString(c[f], LIMITS.text, f);
     if (err) return err;
     c[f] = htmlEscape(c[f].trim());
+  }
+  const t = c.type || 'basic';
+  if (!ALLOWED_TYPES.has(t)) return `type "${t}" not allowed`;
+  c.type = t;
+  if (t === 'basic') {
+    const err = checkString(c.a, LIMITS.text, 'a');
+    if (err) return err;
+    c.a = htmlEscape(c.a.trim());
+  } else {
+    if (c.a !== undefined && c.a !== null && c.a !== '') {
+      const err = checkString(c.a, LIMITS.text, 'a');
+      if (err) return err;
+      c.a = htmlEscape(c.a.trim());
+    } else {
+      delete c.a;
+    }
+  }
+  if (t === 'mc' || t === 'ms') {
+    if (!Array.isArray(c.choices) || c.choices.length < 2 || c.choices.length > MAX_CHOICES) return 'choices must be 2-' + MAX_CHOICES;
+    const cleaned = [];
+    for (const ch of c.choices) {
+      const err = checkString(ch, LIMITS.text, 'choice');
+      if (err) return err;
+      cleaned.push(htmlEscape(ch.trim()));
+    }
+    c.choices = cleaned;
+    if (t === 'mc') {
+      if (!Number.isInteger(c.correct) || c.correct < 0 || c.correct >= cleaned.length) return 'mc correct must be a valid choice index';
+    } else {
+      if (!Array.isArray(c.correct) || c.correct.length === 0) return 'ms correct must be a non-empty array';
+      for (const i of c.correct) {
+        if (!Number.isInteger(i) || i < 0 || i >= cleaned.length) return 'ms correct contains invalid index';
+      }
+      c.correct = [...new Set(c.correct)].sort((a, b) => a - b);
+    }
+  } else if (t === 'tf') {
+    if (c.correct !== true && c.correct !== false) return 'tf correct must be true or false';
+  } else if (t === 'fib') {
+    if (!Array.isArray(c.accepted) || c.accepted.length === 0 || c.accepted.length > MAX_ACCEPTED) return 'accepted must be 1-' + MAX_ACCEPTED + ' strings';
+    const cleaned = [];
+    for (const ans of c.accepted) {
+      const err = checkString(ans, LIMITS.text, 'accepted');
+      if (err) return err;
+      cleaned.push(htmlEscape(ans.trim()));
+    }
+    c.accepted = cleaned;
   }
   if (c.why !== undefined && c.why !== null && c.why !== '') {
     const err = checkString(c.why, LIMITS.text, 'why');
@@ -100,11 +151,30 @@ function sanitizeCard(c) {
   } else {
     delete c.pick;
   }
+  if (c.image !== undefined && c.image !== null && c.image !== '') {
+    if (typeof c.image !== 'string' || !/^data:image\/(png|jpe?g|gif|webp);base64,/.test(c.image)) return 'image must be a base64 data URL';
+    if (c.image.length > MAX_IMAGE_LEN) return 'image too large';
+  } else {
+    delete c.image;
+  }
   return null;
 }
 
 function slug(s) {
   return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'deck';
+}
+
+function serializeCard(c) {
+  const t = c.type || 'basic';
+  const out = { id: c.id, scn: c.scn, topic: c.topic, q: c.q, why: c.why, miss: c.miss };
+  if (t !== 'basic') out.type = t;
+  if (c.a) out.a = c.a;
+  if (t === 'mc' || t === 'ms') { out.choices = c.choices; out.correct = c.correct; }
+  if (t === 'tf') out.correct = c.correct;
+  if (t === 'fib') out.accepted = c.accepted;
+  if (c.image) out.image = c.image;
+  if (c.pick) out.pick = c.pick;
+  return out;
 }
 
 const decksPath = 'decks.json';
@@ -158,7 +228,7 @@ if (payload.type === 'new-deck') {
     id,
     name: htmlEscape(d.name.trim()),
     scenarios: cleanScenarios,
-    cards: d.cards.map(c => ({ id: c.id, scn: c.scn, topic: c.topic, q: c.q, a: c.a, why: c.why, miss: c.miss, ...(c.pick ? { pick: c.pick } : {}) })),
+    cards: d.cards.map(serializeCard),
   });
 
   summary = `New deck **${data.decks[data.decks.length - 1].name}** added (id \`${id}\`, ${d.cards.length} cards, ${Object.keys(cleanScenarios).length} subjects).`;
@@ -197,7 +267,7 @@ if (payload.type === 'new-deck') {
     while (usedIds.has(cid)) cid = `${targetId}-u${Math.random().toString(36).slice(2, 7)}`;
     c.id = cid;
     usedIds.add(cid);
-    target.cards.push({ id: c.id, scn: c.scn, topic: c.topic, q: c.q, a: c.a, why: c.why, miss: c.miss, ...(c.pick ? { pick: c.pick } : {}) });
+    target.cards.push(serializeCard(c));
   });
 
   summary = `${cards.length} card(s) and ${addedSubjects} new subject(s) added to **${target.name}**.`;
