@@ -4,6 +4,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  group('stripFences', () {
+    test('removes ```json fence', () {
+      const wrapped = '```json\n{"kind":"deck"}\n```';
+      expect(BackupImport.stripFences(wrapped), '{"kind":"deck"}');
+    });
+    test('removes plain ``` fence', () {
+      const wrapped = '```\n{"kind":"deck"}\n```';
+      expect(BackupImport.stripFences(wrapped), '{"kind":"deck"}');
+    });
+    test('removes leading/trailing whitespace and tilde fences', () {
+      const wrapped = '   ~~~json\n{"kind":"deck"}\n~~~  ';
+      expect(BackupImport.stripFences(wrapped), '{"kind":"deck"}');
+    });
+    test('leaves un-fenced JSON alone', () {
+      const raw = '  {"kind":"deck"}  ';
+      expect(BackupImport.stripFences(raw), '{"kind":"deck"}');
+    });
+    test('does not touch fences inside the payload', () {
+      const inner = '{"q":"```code block```"}';
+      expect(BackupImport.stripFences(inner), inner);
+    });
+  });
+
   group('import → save → reload', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});

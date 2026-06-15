@@ -79,11 +79,25 @@ class ImportResult {
 }
 
 abstract final class BackupImport {
+  /// Strips a single Markdown code fence around the payload if Claude (or
+  /// any other source) left one in. Handles ```json / ``` / ~~~ variants
+  /// plus surrounding whitespace.
+  static String stripFences(String input) {
+    var s = input.trim();
+    final start =
+        RegExp(r'^(?:`{3,}|~{3,})\s*(?:json|JSON)?\s*\r?\n');
+    s = s.replaceFirst(start, '');
+    final end = RegExp(r'\r?\n(?:`{3,}|~{3,})\s*$');
+    s = s.replaceFirst(end, '');
+    return s.trim();
+  }
+
   static ImportResult merge(
     String jsonString,
     AppStateSnapshot current,
   ) {
-    final decoded = jsonDecode(jsonString);
+    final cleaned = stripFences(jsonString);
+    final decoded = jsonDecode(cleaned);
     if (decoded is! Map) {
       throw const FormatException('JSON must be an object');
     }
