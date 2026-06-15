@@ -75,8 +75,14 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
     _requestedDeckId = event.deckId;
     final deck = _pickDeck(state.allDecks);
     _switchProgressSubscription(deck?.id);
-    _emitForDeck(emit, state.allDecks, deck, resetIdx: true);
-    _persistViewState(deckId: event.deckId);
+    _emitForDeck(
+      emit,
+      state.allDecks,
+      deck,
+      filterOverride: StudyFilter.all,
+      resetIdx: true,
+    );
+    _persistViewState(deckId: event.deckId, filter: StudyFilter.all);
   }
 
   void _onDecksReceived(
