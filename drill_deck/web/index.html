@@ -37,6 +37,7 @@
       flex-direction: column;
       background: #13151a;
       transition: opacity .25s ease;
+      z-index: 9999;
     }
     #boot.hidden { opacity: 0; pointer-events: none; }
     #boot .ring {
@@ -84,8 +85,8 @@
         }
       });
       observer.observe(document.body, { childList: true, subtree: true });
-      // Safety net: hide after 6s no matter what.
-      setTimeout(function () { observer.disconnect(); hideBoot(); }, 6000);
+      // Safety net: hide after 3s no matter what.
+      setTimeout(function () { observer.disconnect(); hideBoot(); }, 3000);
     })();
   </script>
   <script src="flutter_bootstrap.js" async></script>

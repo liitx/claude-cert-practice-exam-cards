@@ -154,9 +154,10 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
     bool resetIdx = false,
   }) {
     if (deck == null) {
+      final stillLoading = allDecks.isEmpty && !_decks.libraryLoaded;
       emit(
         state.copyWith(
-          status: allDecks.isEmpty ? StudyStatus.loading : StudyStatus.empty,
+          status: stillLoading ? StudyStatus.loading : StudyStatus.empty,
           allDecks: allDecks,
           progress: progressOverride ?? const {},
           counts: const StudyCounts.zero(),
