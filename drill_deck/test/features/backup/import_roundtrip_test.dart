@@ -25,6 +25,15 @@ void main() {
       const inner = '{"q":"```code block```"}';
       expect(BackupImport.stripFences(inner), inner);
     });
+    test('extracts JSON from the share body (HTML comment + fence)', () {
+      const wrapped = '<!-- Submission via the Flutter app. -->\n\n'
+          '```json\n{"kind":"deck"}\n```';
+      expect(BackupImport.stripFences(wrapped), '{"kind":"deck"}');
+    });
+    test('strips a leading HTML comment before un-fenced JSON', () {
+      const wrapped = '<!-- header -->\n{"kind":"deck"}';
+      expect(BackupImport.stripFences(wrapped), '{"kind":"deck"}');
+    });
   });
 
   group('import → save → reload', () {

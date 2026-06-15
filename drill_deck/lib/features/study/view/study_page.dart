@@ -88,13 +88,11 @@ class _StudyShellState extends State<_StudyShell> {
       bloc.add(const StudyPrev());
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.digit1 ||
-        key == LogicalKeyboardKey.numpad1) {
+    if (key == LogicalKeyboardKey.digit1 || key == LogicalKeyboardKey.numpad1) {
       bloc.add(const StudyMarkReview());
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.digit2 ||
-        key == LogicalKeyboardKey.numpad2) {
+    if (key == LogicalKeyboardKey.digit2 || key == LogicalKeyboardKey.numpad2) {
       bloc.add(const StudyMarkGot());
       return KeyEventResult.handled;
     }
@@ -118,11 +116,10 @@ class _StudyShellState extends State<_StudyShell> {
                   builder: (context, state) {
                     return switch (state.status) {
                       StudyStatus.initial ||
-                      StudyStatus.loading =>
-                        const _Loading(),
+                      StudyStatus.loading => const _Loading(),
                       StudyStatus.failure => _Failure(
-                          message: state.errorMessage ?? 'Unknown error',
-                        ),
+                        message: state.errorMessage ?? 'Unknown error',
+                      ),
                       StudyStatus.empty => const _Empty(),
                       StudyStatus.ready => _Ready(state: state),
                     };
@@ -140,9 +137,8 @@ class _StudyShellState extends State<_StudyShell> {
 class _Loading extends StatelessWidget {
   const _Loading();
   @override
-  Widget build(BuildContext context) => const Center(
-        child: CircularProgressIndicator(),
-      );
+  Widget build(BuildContext context) =>
+      const Center(child: CircularProgressIndicator());
 }
 
 class _Failure extends StatelessWidget {
@@ -169,12 +165,7 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mono = Theme.of(context).extension<MonoTypography>()!;
-    return Center(
-      child: Text(
-        'No cards in this deck yet.',
-        style: mono.hint,
-      ),
-    );
+    return Center(child: Text('No cards in this deck yet.', style: mono.hint));
   }
 }
 
@@ -205,10 +196,7 @@ class _Ready extends StatelessWidget {
         Expanded(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: 320,
-                maxHeight: 480,
-              ),
+              constraints: const BoxConstraints(minHeight: 320, maxHeight: 480),
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () =>
@@ -242,31 +230,31 @@ class _Ready extends StatelessWidget {
     return switch (card) {
       BasicCard() => BasicCardFront(card: card, scenario: scenario),
       MultipleChoiceCard() => MultipleChoiceCardFront(
-          card: card,
-          scenario: scenario,
-          picked: answer is int ? answer : null,
-          onPick: (i) => bloc.add(StudyAnswerPicked(i)),
-        ),
+        card: card,
+        scenario: scenario,
+        picked: answer is int ? answer : null,
+        onPick: (i) => bloc.add(StudyAnswerPicked(i)),
+      ),
       MultiSelectCard() => MultiSelectCardFront(
-          card: card,
-          scenario: scenario,
-          picked: answer is List
-              ? List<int>.from(answer.whereType<int>())
-              : const <int>[],
-          onToggle: (i) => bloc.add(StudyMultiSelectToggled(i)),
-        ),
+        card: card,
+        scenario: scenario,
+        picked: answer is List
+            ? List<int>.from(answer.whereType<int>())
+            : const <int>[],
+        onToggle: (i) => bloc.add(StudyMultiSelectToggled(i)),
+      ),
       TrueFalseCard() => TrueFalseCardFront(
-          card: card,
-          scenario: scenario,
-          picked: answer is bool ? answer : null,
-          onPick: (v) => bloc.add(StudyAnswerPicked(v)),
-        ),
+        card: card,
+        scenario: scenario,
+        picked: answer is bool ? answer : null,
+        onPick: (v) => bloc.add(StudyAnswerPicked(v)),
+      ),
       FillInBlankCard() => FillInBlankCardFront(
-          card: card,
-          scenario: scenario,
-          picked: answer is String ? answer : null,
-          onChanged: (s) => bloc.add(StudyAnswerPicked(s)),
-        ),
+        card: card,
+        scenario: scenario,
+        picked: answer is String ? answer : null,
+        onChanged: (s) => bloc.add(StudyAnswerPicked(s)),
+      ),
     };
   }
 
@@ -275,27 +263,27 @@ class _Ready extends StatelessWidget {
     return switch (card) {
       BasicCard() => BasicCardBack(card: card, scenario: scenario),
       MultipleChoiceCard() => MultipleChoiceCardBack(
-          card: card,
-          scenario: scenario,
-          picked: answer is int ? answer : null,
-        ),
+        card: card,
+        scenario: scenario,
+        picked: answer is int ? answer : null,
+      ),
       MultiSelectCard() => MultiSelectCardBack(
-          card: card,
-          scenario: scenario,
-          picked: answer is List
-              ? List<int>.from(answer.whereType<int>())
-              : const <int>[],
-        ),
+        card: card,
+        scenario: scenario,
+        picked: answer is List
+            ? List<int>.from(answer.whereType<int>())
+            : const <int>[],
+      ),
       TrueFalseCard() => TrueFalseCardBack(
-          card: card,
-          scenario: scenario,
-          picked: answer is bool ? answer : null,
-        ),
+        card: card,
+        scenario: scenario,
+        picked: answer is bool ? answer : null,
+      ),
       FillInBlankCard() => FillInBlankCardBack(
-          card: card,
-          scenario: scenario,
-          picked: answer is String ? answer : null,
-        ),
+        card: card,
+        scenario: scenario,
+        picked: answer is String ? answer : null,
+      ),
     };
   }
 
@@ -388,4 +376,3 @@ class _ProgressRail extends StatelessWidget {
     );
   }
 }
-

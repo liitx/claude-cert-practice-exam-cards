@@ -37,8 +37,15 @@ class SharePayload {
         'deck': deck.toJson(),
       };
     }
-    final json = const JsonEncoder.withIndent('  ').convert(payload);
-    final body = '<!-- Submission via the Flutter app. Maintainer: review and merge into decks.json. -->\n\n```json\n$json\n```';
+    const comment =
+        '<!-- Submission via the Flutter app. Maintainer: review and merge into decks.json. -->';
+    // Compact JSON keeps the prefilled URL short (URL-encoding ~triples it);
+    // indented JSON is what a maintainer reads when the user pastes manually.
+    // ingest.js runs JSON.parse on the fence, so either form ingests fine.
+    final compactJson = jsonEncode(payload);
+    final prettyJson = const JsonEncoder.withIndent('  ').convert(payload);
+    final urlBody = '$comment\n\n```json\n$compactJson\n```';
+    final pasteBody = '$comment\n\n```json\n$prettyJson\n```';
     final base = Uri.https('github.com', '/$repo/issues/new', {
       'labels': 'submission',
       'title': title,
@@ -46,13 +53,13 @@ class SharePayload {
     final full = base.replace(
       queryParameters: {
         ...base.queryParameters,
-        'body': body,
+        'body': urlBody,
       },
     );
     final fallback = full.toString().length > 7500;
     return SharePayload._(
       title: title,
-      body: body,
+      body: pasteBody,
       uri: fallback ? base : full,
       clipboardFallback: fallback,
     );

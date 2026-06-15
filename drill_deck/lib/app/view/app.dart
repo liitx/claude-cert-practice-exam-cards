@@ -39,6 +39,12 @@ class _AppState extends State<App> {
         RepositoryProvider.value(value: widget.progressRepository),
       ],
       child: BlocProvider(
+        // Eager: hydration is what seeds StorageRepository's stream, which
+        // DecksRepository/ProgressRepository depend on. If this stayed lazy,
+        // the snapshot would only load when the export/import sheet first read
+        // the bloc — so imported decks vanished on refresh and the first
+        // import press hit "App state not loaded yet".
+        lazy: false,
         create: (_) => AppBloc(storageRepository: widget.storageRepository)
           ..add(const AppHydrationRequested()),
         child: MaterialApp.router(

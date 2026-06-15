@@ -79,16 +79,24 @@ class ImportResult {
 }
 
 abstract final class BackupImport {
-  /// Strips a single Markdown code fence around the payload if Claude (or
-  /// any other source) left one in. Handles ```json / ``` / ~~~ variants
-  /// plus surrounding whitespace.
+  /// Extracts the JSON payload out of whatever wrapper a source left around
+  /// it. Handles a fenced ```json / ``` / ~~~ block found anywhere in the
+  /// text (e.g. the share-to-library body, which leads with an HTML comment,
+  /// or Claude output with prose around the fence) and, failing that, a
+  /// leading HTML comment before a raw object. The fence's opening line must
+  /// end in a newline, so inline triple-backticks inside a JSON value are
+  /// left untouched.
   static String stripFences(String input) {
-    var s = input.trim();
-    final start =
-        RegExp(r'^(?:`{3,}|~{3,})\s*(?:json|JSON)?\s*\r?\n');
-    s = s.replaceFirst(start, '');
-    final end = RegExp(r'\r?\n(?:`{3,}|~{3,})\s*$');
-    s = s.replaceFirst(end, '');
+    final fence = RegExp(
+      r'(?:`{3,}|~{3,})[ \t]*(?:json|JSON)?[ \t]*\r?\n'
+      r'([\s\S]*?)'
+      r'\r?\n?(?:`{3,}|~{3,})',
+    );
+    final match = fence.firstMatch(input);
+    if (match != null) return match.group(1)!.trim();
+    // No fence: drop a leading HTML comment (the share body's header) if
+    // present, then trim.
+    final s = input.trim().replaceFirst(RegExp(r'^<!--[\s\S]*?-->\s*'), '');
     return s.trim();
   }
 
