@@ -69,6 +69,16 @@ final class PrivateDeck extends Deck {
         hidden: json['hidden'] == true,
       );
 
+  /// Clones any deck into a private, locally-editable copy. Used for
+  /// fork-on-write: the first edit of a shared "lib" deck produces a "mine"
+  /// copy that shadows it. Cards are marked user-owned.
+  factory PrivateDeck.fork(Deck source) => PrivateDeck(
+        id: source.id,
+        name: source.name,
+        scenarios: Map.of(source.scenarios),
+        cards: source.cards.map(_markUser).toList(),
+      );
+
   final bool hidden;
 
   PrivateDeck copyWith({
@@ -92,19 +102,13 @@ final class PrivateDeck extends Deck {
 }
 
 extension DeckCapabilities on Deck {
-  bool get canDelete => switch (this) {
-        SharedDeck() => false,
-        PrivateDeck() => true,
-      };
-  bool get canEdit => switch (this) {
-        SharedDeck() => false,
-        PrivateDeck() => true,
-      };
+  // All decks are editable/deletable: edits to a shared deck fork it into a
+  // local copy (see [PrivateDeck.fork]), so capability is never frozen at
+  // creation. `canHide`/`isBuiltin` still distinguish the shared origin.
+  bool get canDelete => true;
+  bool get canEdit => true;
   bool get canShare => true;
-  bool get canHide => switch (this) {
-        SharedDeck() => true,
-        PrivateDeck() => false,
-      };
+  bool get canHide => this is SharedDeck;
   bool get isBuiltin => this is SharedDeck;
 }
 

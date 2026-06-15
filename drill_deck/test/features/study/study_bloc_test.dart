@@ -21,6 +21,7 @@ class _MockStorage extends Mock implements StorageRepository {}
 void _registerFallbacks() {
   registerFallbackValue(ProgressState.review);
   registerFallbackValue(AppStateSnapshot.initial());
+  registerFallbackValue(<String>{});
 }
 
 void main() {
@@ -49,8 +50,10 @@ void main() {
     when(repo.watch).thenAnswer((_) => stream.stream);
     when(() => repo.libraryLoaded).thenReturn(true);
     when(repo.refreshShared).thenAnswer((_) async {});
-    when(() => progress.watch(any())).thenAnswer((_) => const Stream.empty());
-    when(() => progress.current(any())).thenReturn(<String, ProgressState>{});
+    when(() => progress.watchMany(any()))
+        .thenAnswer((_) => const Stream.empty());
+    when(() => progress.currentMany(any()))
+        .thenReturn(<String, Map<String, ProgressState>>{});
     when(() => progress.toggle(any(), any(), any()))
         .thenAnswer((_) async {});
     when(() => progress.resetDeck(any())).thenAnswer((_) async {});
@@ -131,6 +134,54 @@ void main() {
       verify: (bloc) {
         expect(bloc.state.deck?.id, 'd2');
         expect(bloc.state.cards, hasLength(1));
+      },
+    );
+
+    const second = SharedDeck(
+      id: 'd2',
+      name: 'Deck 2',
+      scenarios: {},
+      cards: [BasicCard(id: 'x', scn: '', topic: '', q: 'q', a: 'a')],
+    );
+
+    blocTest<StudyBloc, StudyState>(
+      'StudyDeckToggled merges then unmerges a second deck',
+      build: () => StudyBloc(
+        decksRepository: repo,
+        progressRepository: progress,
+        storageRepository: storage,
+      ),
+      act: (bloc) async {
+        bloc.add(const StudyStarted());
+        stream.add(const [deck, second]);
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const StudyDeckToggled('d2'));
+        await Future<void>.delayed(Duration.zero);
+      },
+      verify: (bloc) {
+        expect(bloc.state.selectedDeckIds, containsAll(<String>['d1', 'd2']));
+        // 2 cards from d1 + 1 from d2.
+        expect(bloc.state.cards, hasLength(3));
+      },
+    );
+
+    blocTest<StudyBloc, StudyState>(
+      'StudyDeckToggled never empties the selection',
+      build: () => StudyBloc(
+        decksRepository: repo,
+        progressRepository: progress,
+        storageRepository: storage,
+      ),
+      act: (bloc) async {
+        bloc.add(const StudyStarted());
+        stream.add(const [deck]);
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const StudyDeckToggled('d1')); // try to remove the only deck
+        await Future<void>.delayed(Duration.zero);
+      },
+      verify: (bloc) {
+        expect(bloc.state.selectedDeckIds, {'d1'});
+        expect(bloc.state.cards, hasLength(2));
       },
     );
   });

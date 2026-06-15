@@ -101,6 +101,13 @@ sealed class Card extends Equatable {
   static bool _bool(Object? v) => v == true || v == 'true' || v == 1;
 }
 
+extension CardCapabilities on Card {
+  // Always editable/deletable. Editing a card on a shared deck forks the deck
+  // locally first, so availability is never tied to how the card was created.
+  bool get canEdit => true;
+  bool get canDelete => true;
+}
+
 final class BasicCard extends Card {
   const BasicCard({
     required super.id,

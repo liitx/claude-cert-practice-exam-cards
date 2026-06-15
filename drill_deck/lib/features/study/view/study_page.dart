@@ -4,6 +4,7 @@ import 'package:drill_deck/features/study/widgets/card_fib.dart';
 import 'package:drill_deck/features/study/widgets/card_mc.dart';
 import 'package:drill_deck/features/study/widgets/card_ms.dart';
 import 'package:drill_deck/features/study/widgets/card_tf.dart';
+import 'package:drill_deck/features/study/widgets/deck_controls.dart';
 import 'package:drill_deck/features/study/widgets/deck_footer.dart';
 import 'package:drill_deck/features/study/widgets/deck_selector.dart';
 import 'package:drill_deck/features/study/widgets/filter_chips.dart';
@@ -12,7 +13,6 @@ import 'package:drill_deck/features/study/widgets/study_controls.dart';
 import 'package:drill_deck/models/card.dart';
 import 'package:drill_deck/models/deck.dart';
 import 'package:drill_deck/models/scenario.dart';
-import 'package:drill_deck/models/study_filter.dart';
 import 'package:drill_deck/repositories/decks_repository.dart';
 import 'package:drill_deck/repositories/progress_repository.dart';
 import 'package:drill_deck/repositories/storage_repository.dart';
@@ -178,20 +178,27 @@ class _Ready extends StatelessWidget {
     final deck = state.deck!;
     final mono = Theme.of(context).extension<MonoTypography>()!;
     final card = state.currentCard!;
-    final scenario = _scenarioFor(deck, card);
+    // In a group session the current card may belong to a different deck than
+    // the primary, so resolve its scenario from the owning deck.
+    final scenario = _scenarioFor(state.currentDeck ?? deck, card);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ProgressRail(progress: (state.idx + 1) / state.cards.length),
         const SizedBox(height: 14),
-        _Header(deck: deck, idx: state.idx, total: state.cards.length),
-        if (state.allDecks.length > 1) ...[
-          const SizedBox(height: 12),
-          const DeckSelector(),
-        ],
+        _Header(
+          deck: deck,
+          idx: state.idx,
+          total: state.cards.length,
+          groupCount: state.selectedDeckIds.length,
+        ),
+        const SizedBox(height: 12),
+        const DeckSelector(),
         const SizedBox(height: 14),
         const FilterChips(),
+        const SizedBox(height: 10),
+        const DeckControls(),
         const SizedBox(height: 16),
         Expanded(
           child: Center(
@@ -295,10 +302,16 @@ class _Ready extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.deck, required this.idx, required this.total});
+  const _Header({
+    required this.deck,
+    required this.idx,
+    required this.total,
+    this.groupCount = 1,
+  });
   final Deck deck;
   final int idx;
   final int total;
+  final int groupCount;
 
   @override
   Widget build(BuildContext context) {
@@ -328,7 +341,7 @@ class _Header extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                deck.name,
+                groupCount > 1 ? '${deck.name} +${groupCount - 1} more' : deck.name,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,

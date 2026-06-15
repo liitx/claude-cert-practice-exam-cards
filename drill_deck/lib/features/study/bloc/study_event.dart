@@ -10,8 +10,17 @@ final class StudyStarted extends StudyEvent {
   const StudyStarted();
 }
 
+/// Selects exactly one deck (replaces the current selection).
 final class StudyDeckRequested extends StudyEvent {
   const StudyDeckRequested(this.deckId);
+  final String deckId;
+  @override
+  List<Object?> get props => [deckId];
+}
+
+/// Adds or removes a deck from the group selection. Never empties it.
+final class StudyDeckToggled extends StudyEvent {
+  const StudyDeckToggled(this.deckId);
   final String deckId;
   @override
   List<Object?> get props => [deckId];
@@ -25,10 +34,10 @@ final class StudyDecksReceived extends StudyEvent {
 }
 
 final class StudyProgressReceived extends StudyEvent {
-  const StudyProgressReceived(this.progress);
-  final Map<String, ProgressState> progress;
+  const StudyProgressReceived(this.progressByDeck);
+  final Map<String, Map<String, ProgressState>> progressByDeck;
   @override
-  List<Object?> get props => [progress];
+  List<Object?> get props => [progressByDeck];
 }
 
 final class StudyFilterChanged extends StudyEvent {
@@ -36,6 +45,19 @@ final class StudyFilterChanged extends StudyEvent {
   final StudyFilter filter;
   @override
   List<Object?> get props => [filter];
+}
+
+/// Re-randomizes the order of the currently filtered cards.
+final class StudyShuffled extends StudyEvent {
+  const StudyShuffled();
+}
+
+/// Changes the ordering applied after filtering.
+final class StudySortChanged extends StudyEvent {
+  const StudySortChanged(this.sort);
+  final StudySort sort;
+  @override
+  List<Object?> get props => [sort];
 }
 
 final class StudyFlipped extends StudyEvent {

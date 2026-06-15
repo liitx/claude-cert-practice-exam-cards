@@ -23,6 +23,29 @@ class ProgressRepository {
     return snapshot.progress[deckId] ?? const {};
   }
 
+  /// Stream of `{deckId: {cardId: state}}` for several decks at once — used by
+  /// group study so one subscription covers every selected deck.
+  Stream<Map<String, Map<String, ProgressState>>> watchMany(
+    Set<String> deckIds,
+  ) {
+    return _storage.watch().map((snapshot) => currentManyFrom(snapshot, deckIds));
+  }
+
+  Map<String, Map<String, ProgressState>> currentMany(Set<String> deckIds) {
+    final snapshot = _storage.current;
+    if (snapshot == null) {
+      return {for (final id in deckIds) id: const {}};
+    }
+    return currentManyFrom(snapshot, deckIds);
+  }
+
+  Map<String, Map<String, ProgressState>> currentManyFrom(
+    AppStateSnapshot snapshot,
+    Set<String> deckIds,
+  ) {
+    return {for (final id in deckIds) id: snapshot.progress[id] ?? const {}};
+  }
+
   /// Toggle the state for a card. If `state` matches what's already stored,
   /// the entry is removed (so tapping the same mark twice clears it).
   Future<void> toggle(

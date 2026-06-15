@@ -48,8 +48,15 @@ class DecksRepository {
   bool get libraryLoaded => _libraryLoaded;
 
   void _emit() {
-    final merged = <Deck>[..._shared, ..._snapshot.userDecks];
-    _decks.add(merged);
+    final hidden = _snapshot.hiddenDecks.toSet();
+    final localIds = _snapshot.userDecks.map((d) => d.id).toSet();
+    // Local copies win over shared decks of the same id (fork-on-write), and
+    // hidden decks drop out of both sources.
+    final shared = _shared.where(
+      (d) => !localIds.contains(d.id) && !hidden.contains(d.id),
+    );
+    final user = _snapshot.userDecks.where((d) => !hidden.contains(d.id));
+    _decks.add(<Deck>[...shared, ...user]);
   }
 
   Future<void> dispose() async {

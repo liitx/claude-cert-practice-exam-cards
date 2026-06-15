@@ -17,6 +17,7 @@ final class AppStateSnapshot extends Equatable {
     required this.hiddenDecks,
     required this.filter,
     required this.cardIndex,
+    this.selectedDeckIds = const [],
   });
 
   factory AppStateSnapshot.initial() => const AppStateSnapshot(
@@ -28,12 +29,14 @@ final class AppStateSnapshot extends Equatable {
         hiddenDecks: [],
         filter: StudyFilter.miss,
         cardIndex: 0,
+        selectedDeckIds: [],
       );
 
   factory AppStateSnapshot.fromJson(Map<String, Object?> json) {
     final view = json['view'];
     final filterRaw = view is Map ? view['filter'] : null;
     final idxRaw = view is Map ? view['idx'] : null;
+    final selectedRaw = view is Map ? view['selectedDeckIds'] : null;
 
     return AppStateSnapshot(
       currentDeckId: json['currentDeckId'] is String
@@ -46,6 +49,7 @@ final class AppStateSnapshot extends Equatable {
       hiddenDecks: _readStringList(json['hiddenDecks']),
       filter: StudyFilter.tryParse(filterRaw),
       cardIndex: idxRaw is int ? idxRaw : 0,
+      selectedDeckIds: _readStringList(selectedRaw),
     );
   }
 
@@ -57,6 +61,10 @@ final class AppStateSnapshot extends Equatable {
   final List<String> hiddenDecks;
   final StudyFilter filter;
   final int cardIndex;
+
+  /// Decks combined into the current group study session (empty = just the
+  /// single [currentDeckId]).
+  final List<String> selectedDeckIds;
 
   Map<String, Object?> toJson() => {
         'currentDeckId': currentDeckId,
@@ -80,7 +88,11 @@ final class AppStateSnapshot extends Equatable {
             },
         },
         'hiddenDecks': hiddenDecks,
-        'view': {'filter': filter.id, 'idx': cardIndex},
+        'view': {
+          'filter': filter.id,
+          'idx': cardIndex,
+          'selectedDeckIds': selectedDeckIds,
+        },
       };
 
   AppStateSnapshot copyWith({
@@ -92,6 +104,7 @@ final class AppStateSnapshot extends Equatable {
     List<String>? hiddenDecks,
     StudyFilter? filter,
     int? cardIndex,
+    List<String>? selectedDeckIds,
   }) {
     return AppStateSnapshot(
       currentDeckId: currentDeckId ?? this.currentDeckId,
@@ -102,6 +115,7 @@ final class AppStateSnapshot extends Equatable {
       hiddenDecks: hiddenDecks ?? this.hiddenDecks,
       filter: filter ?? this.filter,
       cardIndex: cardIndex ?? this.cardIndex,
+      selectedDeckIds: selectedDeckIds ?? this.selectedDeckIds,
     );
   }
 
@@ -115,6 +129,7 @@ final class AppStateSnapshot extends Equatable {
         hiddenDecks,
         filter,
         cardIndex,
+        selectedDeckIds,
       ];
 }
 

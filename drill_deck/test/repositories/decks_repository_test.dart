@@ -63,6 +63,48 @@ void main() {
     await repo.dispose();
   });
 
+  test('local deck wins over a shared deck with the same id', () async {
+    when(library.fetchShared).thenAnswer(
+      (_) async => const [
+        SharedDeck(id: 'cca-f', name: 'Library', scenarios: {}, cards: []),
+      ],
+    );
+    final repo = DecksRepository(storage: storage, library: library);
+    await repo.refreshShared();
+    expect(repo.current.single.name, 'Library');
+
+    storageStream.add(
+      AppStateSnapshot.initial().copyWith(
+        userDecks: const [
+          PrivateDeck(id: 'cca-f', name: 'My Fork', scenarios: {}, cards: []),
+        ],
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    final decks = repo.current;
+    expect(decks, hasLength(1));
+    expect(decks.single, isA<PrivateDeck>());
+    expect(decks.single.name, 'My Fork');
+    await repo.dispose();
+  });
+
+  test('hidden decks drop out of the merged list', () async {
+    when(library.fetchShared).thenAnswer(
+      (_) async => const [
+        SharedDeck(id: 'cca-f', name: 'Library', scenarios: {}, cards: []),
+      ],
+    );
+    final repo = DecksRepository(storage: storage, library: library);
+    await repo.refreshShared();
+
+    storageStream.add(
+      AppStateSnapshot.initial().copyWith(hiddenDecks: const ['cca-f']),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(repo.current, isEmpty);
+    await repo.dispose();
+  });
+
   test('library fetch failure leaves libraryLoaded true with empty shared',
       () async {
     when(library.fetchShared).thenThrow(

@@ -45,8 +45,10 @@ class _AppState extends State<App> {
         // the bloc — so imported decks vanished on refresh and the first
         // import press hit "App state not loaded yet".
         lazy: false,
-        create: (_) => AppBloc(storageRepository: widget.storageRepository)
-          ..add(const AppHydrationRequested()),
+        create: (_) => AppBloc(
+          storageRepository: widget.storageRepository,
+          decksRepository: widget.decksRepository,
+        )..add(const AppHydrationRequested()),
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'Drill Deck',
