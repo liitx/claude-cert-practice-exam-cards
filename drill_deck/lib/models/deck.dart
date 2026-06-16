@@ -126,14 +126,23 @@ Map<String, Scenario> _readScenarios(Object? raw) {
 List<Card> _readCards(Object? raw) {
   if (raw is! List) return const [];
   final out = <Card>[];
+  var i = 0;
   for (final c in raw) {
     if (c is Map) {
+      final map = c.cast<String, Object?>();
+      // Cards imported without an id (older imports, hand-pasted JSON) get a
+      // stable position-based id so editing/deleting/progress can key on them.
+      final id = map['id'];
+      if (id is! String || id.isEmpty) {
+        map['id'] = 'c$i';
+      }
       try {
-        out.add(Card.fromJson(c.cast<String, Object?>()));
+        out.add(Card.fromJson(map));
       } catch (_) {
         // Skip malformed cards instead of failing the whole deck.
       }
     }
+    i++;
   }
   return out;
 }

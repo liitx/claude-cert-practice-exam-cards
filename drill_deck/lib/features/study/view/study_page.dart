@@ -13,6 +13,7 @@ import 'package:drill_deck/features/study/widgets/study_controls.dart';
 import 'package:drill_deck/models/card.dart';
 import 'package:drill_deck/models/deck.dart';
 import 'package:drill_deck/models/scenario.dart';
+import 'package:drill_deck/models/study_filter.dart';
 import 'package:drill_deck/repositories/decks_repository.dart';
 import 'package:drill_deck/repositories/progress_repository.dart';
 import 'package:drill_deck/repositories/storage_repository.dart';
@@ -120,7 +121,7 @@ class _StudyShellState extends State<_StudyShell> {
                       StudyStatus.failure => _Failure(
                         message: state.errorMessage ?? 'Unknown error',
                       ),
-                      StudyStatus.empty => const _Empty(),
+                      StudyStatus.empty => _Empty(state: state),
                       StudyStatus.ready => _Ready(state: state),
                     };
                   },
@@ -161,11 +162,41 @@ class _Failure extends StatelessWidget {
 }
 
 class _Empty extends StatelessWidget {
-  const _Empty();
+  const _Empty({required this.state});
+  final StudyState state;
+
   @override
   Widget build(BuildContext context) {
     final mono = Theme.of(context).extension<MonoTypography>()!;
-    return Center(child: Text('No cards in this deck yet.', style: mono.hint));
+    // The deck has cards but the active filter hides them all — tell the user
+    // why and offer a one-tap way out instead of a blank screen.
+    final hiddenByFilter = state.counts.all > 0;
+    if (!hiddenByFilter) {
+      return Center(
+        child: Text('No cards in this deck yet.', style: mono.hint),
+      );
+    }
+    final label = switch (state.filter) {
+      StudyFilter.miss => 'No missed cards here.',
+      StudyFilter.review => 'Nothing marked for review.',
+      StudyFilter.got => 'Nothing marked got it.',
+      StudyFilter.all => 'No cards match.',
+    };
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: mono.hint),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: () => context
+                .read<StudyBloc>()
+                .add(const StudyFilterChanged(StudyFilter.all)),
+            child: Text('Show all ${state.counts.all} cards'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
