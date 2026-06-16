@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-06-14",
+  "updated": "2026-06-16",
   "decks": [
     {
       "id": "cca-f",
@@ -610,6 +610,192 @@
           "why": "ugh",
           "miss": false,
           "a": "another answer"
+        }
+      ]
+    },
+    {
+      "id": "claude-interfaces-claude-ai-vs-desktop-v",
+      "name": "Claude Interfaces: claude.ai vs Desktop vs CLI",
+      "scenarios": {
+        "CLAUDEAI": {
+          "label": "claude.ai (Web/Mobile)",
+          "color": "#7c83ff"
+        },
+        "DESKTOP": {
+          "label": "Claude Desktop App",
+          "color": "#f4a261"
+        },
+        "CLI": {
+          "label": "Claude Code / CLI",
+          "color": "#5fb89a"
+        },
+        "API": {
+          "label": "API &amp; General",
+          "color": "#e76f51"
+        }
+      },
+      "cards": [
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c1",
+          "scn": "CLI",
+          "topic": "Claude Code Purpose",
+          "q": "Which of the following best describe Claude Code&#39;s primary use cases?",
+          "why": "Claude Code is a CLI tool designed for agentic, code-centric workflows — not browser-based chat or GUI document creation.",
+          "miss": false,
+          "type": "ms",
+          "choices": [
+            "Agentic coding tasks run from the terminal",
+            "Casual chat and brainstorming in a browser",
+            "File creation, editing, and bash command execution",
+            "Generating AI-powered slide decks via GUI"
+          ],
+          "correct": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c2",
+          "scn": "CLAUDEAI",
+          "topic": "Exclusive Web Features",
+          "q": "Which features are available on claude.ai but NOT in Claude Code CLI?",
+          "why": "Artifacts and Deep Research are claude.ai-specific UI features. Bash execution belongs to Claude Code; MCP is available across contexts.",
+          "miss": false,
+          "type": "ms",
+          "choices": [
+            "Artifacts (rendered HTML/React/SVG output)",
+            "Bash command execution on local machine",
+            "Deep Research mode",
+            "MCP server tool calls"
+          ],
+          "correct": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c3",
+          "scn": "DESKTOP",
+          "topic": "Desktop App Differentiation",
+          "q": "The Claude Desktop app is best described as:",
+          "why": "The Desktop app&#39;s key differentiator is native OS integration and MCP server support, enabling local tool connections not possible in the browser.",
+          "miss": false,
+          "type": "mc",
+          "choices": [
+            "A wrapper around claude.ai with added local file system access",
+            "A standalone native app for macOS/Windows supporting MCP servers and local integrations",
+            "A GUI frontend exclusively for the Claude API",
+            "An offline version of Claude with no internet requirement"
+          ],
+          "correct": 1
+        },
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c4",
+          "scn": "CLI",
+          "topic": "Claude Code vs claude.ai",
+          "q": "A developer wants Claude to autonomously read files, run tests, and commit code. Which interface is appropriate?",
+          "why": "This scenario requires Claude Code (CLI), not claude.ai. claude.ai is a chat interface; it cannot execute shell commands or directly access the local file system.",
+          "miss": false,
+          "type": "tf",
+          "correct": false
+        },
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c5",
+          "scn": "CLAUDEAI",
+          "topic": "Memory &amp; Persistence",
+          "q": "Which statements about memory are true for claude.ai?",
+          "why": "Memory generation and user-editable controls are claude.ai features; Incognito disables memory, and memories are per-user, not shared.",
+          "miss": false,
+          "type": "ms",
+          "choices": [
+            "Claude can generate and store memories across conversations",
+            "Memory is enabled in Incognito conversations by default",
+            "Users can edit or delete stored memories",
+            "Memory is shared across all users of the same account"
+          ],
+          "correct": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c6",
+          "scn": "API",
+          "topic": "Model Access",
+          "q": "Which models are currently available via the Anthropic API? (Select all that apply)",
+          "why": "Claude Mythos Preview is not publicly available — it is restricted to trusted organizations under Project Glasswing and cannot be accessed via the standard API.",
+          "miss": false,
+          "type": "ms",
+          "choices": [
+            "claude-sonnet-4-6",
+            "claude-haiku-4-5-20251001",
+            "claude-opus-4-8",
+            "claude-mythos-preview"
+          ],
+          "correct": [
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c7",
+          "scn": "CLI",
+          "topic": "Claude Code Installation",
+          "q": "Claude Code is installed via:",
+          "why": "Claude Code is a Node.js-based CLI tool distributed through npm, unlike the Desktop app which uses a native installer.",
+          "miss": false,
+          "type": "fib",
+          "accepted": [
+            "npm",
+            "npm install",
+            "npx",
+            "node package manager"
+          ]
+        },
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c8",
+          "scn": "DESKTOP",
+          "topic": "MCP in Desktop vs Web",
+          "q": "Which interface(s) natively support connecting to local MCP servers without additional configuration?",
+          "why": "Both the Desktop app and Claude Code CLI are designed to connect to local MCP servers. The browser-based claude.ai connects to cloud MCP endpoints, not local ones.",
+          "miss": false,
+          "type": "ms",
+          "choices": [
+            "claude.ai (browser)",
+            "Claude Desktop app",
+            "Claude Code CLI",
+            "Claude for Excel"
+          ],
+          "correct": [
+            1,
+            2
+          ]
+        },
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c9",
+          "scn": "CLAUDEAI",
+          "topic": "claude.ai Plans",
+          "q": "A team wants shared conversation history, admin controls, and priority access. Which plan fits?",
+          "why": "Team and Enterprise plans add admin controls, shared workspaces, and organizational features beyond what Pro (individual) or Free tiers provide.",
+          "miss": false,
+          "type": "mc",
+          "choices": [
+            "Free",
+            "Pro",
+            "Team or Enterprise",
+            "API access only"
+          ],
+          "correct": 2
+        },
+        {
+          "id": "claude-interfaces-claude-ai-vs-desktop-v-c10",
+          "scn": "API",
+          "topic": "Interface Selection Judgment",
+          "q": "Match each use case to the most appropriate Claude interface: (1) Non-developer automating file/task management, (2) Embedding Claude in a product, (3) Pair programming in VS Code.",
+          "why": "Interface selection depends on the user&#39;s technical level and integration depth — Cowork targets non-developers, the API is for builders, and Claude Code extensions integrate directly into IDEs.",
+          "miss": false,
+          "a": "(1) Cowork (desktop automation tool), (2) Anthropic API, (3) Claude Code for VS Code extension"
         }
       ]
     }
